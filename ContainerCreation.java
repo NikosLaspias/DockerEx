@@ -11,14 +11,25 @@ import java.util.List;
 import java.util.Scanner;
 
 public class ContainerCreation {
+    private static String containerId;
+
     public static void main(String[] args) {
         // Δημιουργία ενός Docker client
         DockerClient dockerClient = DockerClientBuilder.getInstance().build();
-
-        // ID ή όνομα του container που θέλετε να ελέγξετε
-        System.out.println("Please enter the container ID that you want to control:");
         Scanner input = new Scanner(System.in);
-        String containerId = input.next();
+        boolean state = false;
+        do {
+            try {
+                // ID ή όνομα του container που θέλετε να ελέγξετε
+                System.out.println("Please enter the container ID that you want to control:");
+                String containerId = input.next();
+                state = true;
+            } catch (java.util.InputMismatchException e) {
+                System.err.println("Invalid container ID.Please try again ");
+                input.next();
+            }
+        } while (!state);
+        input.close();
 
         // Έλεγχος αν ο container είναι εκκινημένος
         InspectContainerResponse containerInfo = dockerClient.inspectContainerCmd(containerId).exec();
@@ -36,7 +47,7 @@ public class ContainerCreation {
             System.out.println("Container stopped.");
         }
 
-        // Εμφάνιση λίστας ενεργών containers
+        // Εμφάνιση λίστας ενεργών containers με το αντιστοιχο id και την κατάσταση τους
         System.out.println("Active Containers:");
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
         containers.forEach(c -> System.out.println(c.getId() + " " + c.getState()));

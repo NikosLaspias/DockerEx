@@ -3,7 +3,7 @@ package com.example;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.api.command.InspectImageResponse;
-import com.github.dockerjava.api.command.ListImagesCmd;
+import com.github.dockerjava.api.model.ContainerConfig;
 
 import java.util.List;
 
@@ -12,14 +12,18 @@ public class Image {
     private DockerClient dockerClient;
 
     public Image() {
+        // Δημιουργία ενός Docker client κατά την αρχικοποίηση του αντικειμένου Image
         this.dockerClient = DockerClientBuilder.getInstance().build();
     }
 
     public void pullImageIfNotExists(String imageName) {
+        // Λίστα εικόνων που πληρούν τα κριτήρια του φίλτρου
         List<com.github.dockerjava.api.model.Image> images = dockerClient.listImagesCmd().withImageNameFilter(imageName)
                 .exec();
 
         if (images.isEmpty()) {
+            // Εάν η λίστα είναι κενή, τότε η εικόνα δεν υπάρχει, οπότε πραγματοποιούμε το
+            // pull
             pullImage(imageName);
             System.out.println("Image was not already pulled. Image pulled successfully.");
         } else {
@@ -28,11 +32,12 @@ public class Image {
     }
 
     private void pullImage(String imageName) {
-        // pull an image
+        // Πραγματοποίηση pull μιας εικόνας
         dockerClient.pullImageCmd(imageName).exec(null);
     }
 
     public void listImages() {
+        // Λίστα όλων των εικόνων
         List<com.github.dockerjava.api.model.Image> images = dockerClient.listImagesCmd().exec();
         System.out.println("List of Docker images:");
         for (com.github.dockerjava.api.model.Image image : images) {
@@ -45,7 +50,7 @@ public class Image {
     }
 
     public void searchImages(String searchTerm) {
-        // search an image
+        // Αναζήτηση εικόνων βάσει ενός όρου
         dockerClient.searchImagesCmd(searchTerm).exec().forEach(result -> {
             System.out.println("Image Name: " + result.getName());
             System.out.println("Description: " + result.getDescription());
@@ -54,35 +59,31 @@ public class Image {
     }
 
     public InspectImageResponse inspectImage(String imageId) {
+        // Επισκόπηση μιας συγκεκριμένης εικόνας
         return dockerClient.inspectImageCmd(imageId).exec();
     }
 
     public void removeImage(String imageId) {
-        // remove an image
+        // Διαγραφή μιας εικόνας
         dockerClient.removeImageCmd(imageId).exec();
         System.out.println("Image removed successfully.");
     }
 
     public void showPullHistory(String imageName) {
-        // show pull history of an image
+        // Εμφάνιση του ιστορικού pull μιας εικόνας
         List<com.github.dockerjava.api.model.Image> images = dockerClient.listImagesCmd().withImageNameFilter(imageName)
                 .exec();
         for (com.github.dockerjava.api.model.Image image : images) {
             System.out.println("Pull History for Image ID " + image.getId());
-            ((Object) dockerClient).historyCmd(image.getId()).exec().forEach(historyItem -> {
-                System.out.println("History: " + historyItem.getCreatedBy());
-                System.out.println("------------------------");
-            });
+
+            // Προσπελαύνουμε τη διαμόρφωση του container που χρησιμοποιήθηκε για το pull
+            // της εικόνας
+            ContainerConfig containerConfig = dockerClient.inspectImageCmd(image.getId()).exec().getContainerConfig();
+
+            // Εμφανίζουμε τις εντολές (CMD) που εκτελέστηκαν κατά το pull
+            System.out.println("Commands executed during pull: " + containerConfig.getCmd());
+            System.out.println("------------------------");
         }
     }
 
-    public static void main(String[] args) {
-        Image dockerOperations = new Image();
-        String imageNameToPull = "your_image_name";
-
-        dockerOperations.searchImages("search_term");
-        dockerOperations.inspectImage("image_id");
-        dockerOperations.removeImage("image_id");
-        dockerOperations.showPullHistory(imageNameToPull);
-    }
 }
