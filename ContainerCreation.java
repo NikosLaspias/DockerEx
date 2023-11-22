@@ -13,7 +13,7 @@ import java.util.Scanner;
 public class ContainerCreation {
     private static String containerId;
 
-    public static void main(String[] args) {
+    public static void manageContainers() {
         // Δημιουργία ενός Docker client
         DockerClient dockerClient = DockerClientBuilder.getInstance().build();
         Scanner input = new Scanner(System.in);
