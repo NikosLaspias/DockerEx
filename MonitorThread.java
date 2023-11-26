@@ -4,13 +4,16 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ContainerPort;
 import com.github.dockerjava.core.DockerClientBuilder;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.Closeable;
 
-public class MonitorThread extends Thread {
+public class MonitorThread implements Runnable, Closeable {
 
-    private DockerClient dockerClient;
-    private List<ContainerMeasurement> containerMeasurements;
+    private final DockerClient dockerClient;
+    final List<ContainerMeasurement> containerMeasurements;
 
     public MonitorThread() {
         this.dockerClient = DockerClientBuilder.getInstance().build();
@@ -19,26 +22,23 @@ public class MonitorThread extends Thread {
 
     @Override
     public void run() {
-        while (true) {
-            try {
-                // Ελέγχετε τα containers και καταγράφετε τις μετρήσεις
+        try {
+            while (true) {
                 monitorContainers();
-
-                // Περιμένετε για κάποιο χρονικό διάστημα πριν ελέγξετε ξανά
-                Thread.sleep(5000); // π.χ., 5 δευτερόλεπτα
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.sleep(5000);
             }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
-    private void monitorContainers() {
+    private synchronized void monitorContainers() {
         System.out.println("Monitoring Containers:");
 
-        // Λίστα όλων των containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
 
-        // Καταγραφή των στοιχείων των containers στον πίνακα containerMeasurements
+        containerMeasurements.clear(); // Καθαρίζει τη λίστα πριν από την ανανέωση
+
         for (Container container : containers) {
             ContainerMeasurement measurement = new ContainerMeasurement(
                     container.getId(),
@@ -49,7 +49,6 @@ public class MonitorThread extends Thread {
             containerMeasurements.add(measurement);
         }
 
-        // Εμφανίζετε τα στοιχεία των containers
         for (ContainerMeasurement measurement : containerMeasurements) {
             System.out.println("Container ID: " + measurement.getId());
             System.out.println("Image Name: " + measurement.getImage());
@@ -70,12 +69,23 @@ public class MonitorThread extends Thread {
         return result.toString();
     }
 
+    @Override
+    public void close() throws IOException {
+        if (dockerClient != null) {
+            try {
+                dockerClient.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     static class ContainerMeasurement {
-        private String id;
-        private String image;
-        private String status;
-        private String ports;
-        private String command;
+        private final String id;
+        private final String image;
+        private final String status;
+        private final String ports;
+        private final String command;
 
         public ContainerMeasurement(String id, String image, String status, String ports, String command) {
             this.id = id;
@@ -104,5 +114,11 @@ public class MonitorThread extends Thread {
         public String getCommand() {
             return command;
         }
+
+        public static List<ContainerMeasurement> getContainerMeasurements(
+                List<ContainerMeasurement> containerMeasurements) {
+            return new ArrayList<>(containerMeasurements);
+        }
+
     }
 }

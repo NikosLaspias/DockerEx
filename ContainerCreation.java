@@ -22,7 +22,7 @@ public class ContainerCreation {
             try {
                 // ID ή όνομα του container που θέλετε να ελέγξετε
                 System.out.println("Please enter the container ID that you want to control:");
-                String containerId = input.next();
+                containerId = input.next();
                 state = true;
             } catch (java.util.InputMismatchException e) {
                 System.err.println("Invalid container ID.Please try again ");
@@ -33,6 +33,7 @@ public class ContainerCreation {
 
         // Έλεγχος αν ο container είναι εκκινημένος
         InspectContainerResponse containerInfo = dockerClient.inspectContainerCmd(containerId).exec();
+        System.out.println("hello");
         Boolean isRunning = containerInfo.getState().getRunning();
 
         if (!isRunning) {

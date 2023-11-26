@@ -5,25 +5,22 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.model.ContainerConfig;
 
+import java.io.IOException;
 import java.util.List;
 
-public class Image {
+public class Image implements AutoCloseable {
 
     private DockerClient dockerClient;
 
     public Image() {
-        // Δημιουργία ενός Docker client κατά την αρχικοποίηση του αντικειμένου Image
         this.dockerClient = DockerClientBuilder.getInstance().build();
     }
 
     public void pullImageIfNotExists(String imageName) {
-        // Λίστα εικόνων που πληρούν τα κριτήρια του φίλτρου
         List<com.github.dockerjava.api.model.Image> images = dockerClient.listImagesCmd().withImageNameFilter(imageName)
                 .exec();
 
         if (images.isEmpty()) {
-            // Εάν η λίστα είναι κενή, τότε η εικόνα δεν υπάρχει, οπότε πραγματοποιούμε το
-            // pull
             pullImage(imageName);
             System.out.println("Image was not already pulled. Image pulled successfully.");
         } else {
@@ -32,12 +29,14 @@ public class Image {
     }
 
     private void pullImage(String imageName) {
-        // Πραγματοποίηση pull μιας εικόνας
-        dockerClient.pullImageCmd(imageName).exec(null);
+        try {
+            dockerClient.pullImageCmd(imageName).exec(null);
+        } catch (Exception e) {
+            System.err.println("Error pulling image: " + e.getMessage());
+        }
     }
 
     public void listImages() {
-        // Λίστα όλων των εικόνων
         List<com.github.dockerjava.api.model.Image> images = dockerClient.listImagesCmd().exec();
         System.out.println("List of Docker images:");
         for (com.github.dockerjava.api.model.Image image : images) {
@@ -50,7 +49,6 @@ public class Image {
     }
 
     public void searchImages(String searchTerm) {
-        // Αναζήτηση εικόνων βάσει ενός όρου
         dockerClient.searchImagesCmd(searchTerm).exec().forEach(result -> {
             System.out.println("Image Name: " + result.getName());
             System.out.println("Description: " + result.getDescription());
@@ -59,31 +57,39 @@ public class Image {
     }
 
     public InspectImageResponse inspectImage(String imageId) {
-        // Επισκόπηση μιας συγκεκριμένης εικόνας
         return dockerClient.inspectImageCmd(imageId).exec();
     }
 
     public void removeImage(String imageId) {
-        // Διαγραφή μιας εικόνας
-        dockerClient.removeImageCmd(imageId).exec();
-        System.out.println("Image removed successfully.");
+        try {
+            dockerClient.removeImageCmd(imageId).exec();
+            System.out.println("Image removed successfully.");
+        } catch (Exception e) {
+            System.err.println("Error removing image: " + e.getMessage());
+        }
     }
 
     public void showPullHistory(String imageName) {
-        // Εμφάνιση του ιστορικού pull μιας εικόνας
         List<com.github.dockerjava.api.model.Image> images = dockerClient.listImagesCmd().withImageNameFilter(imageName)
                 .exec();
         for (com.github.dockerjava.api.model.Image image : images) {
             System.out.println("Pull History for Image ID " + image.getId());
 
-            // Προσπελαύνουμε τη διαμόρφωση του container που χρησιμοποιήθηκε για το pull
-            // της εικόνας
-            ContainerConfig containerConfig = dockerClient.inspectImageCmd(image.getId()).exec().getContainerConfig();
+            ContainerConfig containerConfig = inspectImage(image.getId()).getContainerConfig();
 
-            // Εμφανίζουμε τις εντολές (CMD) που εκτελέστηκαν κατά το pull
             System.out.println("Commands executed during pull: " + containerConfig.getCmd());
             System.out.println("------------------------");
         }
     }
 
+    @Override
+    public void close() {
+        if (dockerClient != null) {
+            try {
+                dockerClient.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

@@ -8,56 +8,39 @@ import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.command.ExecStartResultCallback;
+import com.github.dockerjava.api.model.Frame;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
 public class AppWithContainer {
-    private static String imageName;
-    private static String containerName;
 
-    public static void main(String[] args) throws InterruptedException {
+    private final DockerClient dockerClient;
+    private final String imageName;
+    private final String containerName;
+
+    public AppWithContainer(DockerClient dockerClient, String imageName, String containerName) {
+        this.dockerClient = dockerClient;
+        this.imageName = imageName;
+        this.containerName = containerName;
+    }
+
+    public AppWithContainer(String dockerHost, String imageName, String containerName) {
         DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder();
-        builder.withDockerHost("tcp://localhost:2375");
+        builder.withDockerHost(dockerHost);
+        this.dockerClient = DockerClientBuilder.getInstance(builder.build()).build();
+        this.imageName = imageName;
+        this.containerName = containerName;
+    }
 
-        DockerClient dockerClient = DockerClientBuilder.getInstance().build();
-        dockerClient.versionCmd().exec();
-
-        Scanner input = new Scanner(System.in);
-        boolean state = false;
-        do {
-            try {
-                // Εισαγωγή του ονόματος της εικόνας
-                System.out.print("Enter an image name: ");
-                imageName = input.next();
-                state = true;
-            } catch (java.util.InputMismatchException e) {
-                System.err.println("Invalid image name.Please try again ");
-                input.next();
-            }
-        } while (!state);
-        input.close();
+    public void manageContainer() throws InterruptedException {
         // Κατεβάστε την εικόνα αν δεν υπάρχει τοπικά
         dockerClient.pullImageCmd(imageName)
                 .exec(new PullImageResultCallback())
                 .awaitCompletion();
-
-        // Εισαγωγή του ID ή ονόματος του container
-        System.out.print("Please enter the container ID that you want to control: ");
-        boolean st = false;
-        do {
-            try {
-                // ID ή όνομα του container που θέλετε να ελέγξετε
-                System.out.println("Please enter the container ID that you want to control:");
-                String containerId = input.next();
-                st = true;
-            } catch (java.util.InputMismatchException e) {
-                System.err.println("Invalid container ID.Please try again ");
-                input.next();
-            }
-        } while (!st);
-        input.close();
 
         // Δημιουργία του container
         CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(imageName)
@@ -77,7 +60,34 @@ public class AppWithContainer {
 
         // Εκτέλεση της εντολής και εκτύπωση των αποτελεσμάτων
         dockerClient.execStartCmd(execCreateCmdResponse.getId())
-                .exec(new ExecStartResultCallback(System.out, System.err))
+                .exec(new com.github.dockerjava.api.async.ResultCallback.Adapter<Frame>() {
+                    private final Logger LOGGER = LoggerFactory.getLogger(getClass());
+
+                    @Override
+                    public void onNext(Frame frame) {
+                        if (frame != null) {
+                            try {
+                                switch (frame.getStreamType()) {
+                                    case STDOUT:
+                                    case RAW:
+                                        System.out.write(frame.getPayload());
+                                        System.out.flush();
+                                        break;
+                                    case STDERR:
+                                        System.err.write(frame.getPayload());
+                                        System.err.flush();
+                                        break;
+                                    default:
+                                        LOGGER.error("unknown stream type:" + frame.getStreamType());
+                                }
+                            } catch (IOException e) {
+                                onError(e);
+                            }
+
+                            LOGGER.debug(frame.toString());
+                        }
+                    }
+                })
                 .awaitCompletion();
 
         // Αφήνουμε λίγο χρόνο για να εκκινήσει το container
@@ -102,11 +112,13 @@ public class AppWithContainer {
         // Καθαρισμός του container (διαγραφή)
         System.out.println("Do you want to delete the container?");
         System.out.println("Valid responses Y or N");
-        String response = input.next();
-        if (response.equals("Y")) {
-            dockerClient.removeContainerCmd(id).exec();
-        } else {
-            System.exit(0);
+        try (Scanner input = new Scanner(System.in)) {
+            String response = input.next();
+            if (response.equals("Y")) {
+                dockerClient.removeContainerCmd(id).exec();
+            } else {
+                System.exit(0);
+            }
         }
     }
 }
