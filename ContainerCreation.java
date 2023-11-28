@@ -2,6 +2,7 @@ package com.example;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.StopContainerCmd;
@@ -15,7 +16,9 @@ public class ContainerCreation {
 
     public static void manageContainers() {
         // Δημιουργία ενός Docker client
-        DockerClient dockerClient = DockerClientBuilder.getInstance().build();
+        DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
+                .withDockerHost("tcp://localhost:2375").build();
+        DockerClient dockerClient = DockerClientBuilder.getInstance(config).build();
         Scanner input = new Scanner(System.in);
         boolean state = false;
         do {
@@ -33,7 +36,7 @@ public class ContainerCreation {
 
         // Έλεγχος αν ο container είναι εκκινημένος
         InspectContainerResponse containerInfo = dockerClient.inspectContainerCmd(containerId).exec();
-        System.out.println("hello");
+
         Boolean isRunning = containerInfo.getState().getRunning();
 
         if (!isRunning) {
@@ -52,5 +55,6 @@ public class ContainerCreation {
         System.out.println("Active Containers:");
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
         containers.forEach(c -> System.out.println(c.getId() + " " + c.getState()));
+
     }
 }
