@@ -33,7 +33,7 @@ public class ContainerCreation {
         } while (!state);
         input.close();
 
-        // Έλεγχος αν ο container είναι εκκινημένος
+        // Check if the container is started
         InspectContainerResponse containerInfo = dockerClient.inspectContainerCmd(containerId).exec();
 
         Boolean isRunning = containerInfo.getState().getRunning();
