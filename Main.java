@@ -10,10 +10,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 public class Main {
-
     public static void main(String[] args) throws IOException, InterruptedException {
+        // Manage Docker containers
+        ContainerCreation.manageContainers();
+        ExecutorThread.executeContainer();
 
-        // Δημιουργία και χρήση της κλάσης AppWithContainer
+        // Create and use the AppWithContainer class
         try (Scanner scanner = new Scanner(System.in)) {
             System.out.println("Enter the Docker image name:");
             String imageName = scanner.nextLine();
@@ -21,12 +23,14 @@ public class Main {
             System.out.println("Enter the Docker container ID:");
             String containerId = scanner.nextLine();
 
+            // Create an instance of AppWithContainer and manage the container
             AppWithContainer app = new AppWithContainer("tcp://localhost:2375", imageName, containerId);
             app.manageContainer();
         }
 
-        // Εργασίες πάνω στις εικόνες Docker
+        // Docker image operations
         try (Image dockerOperations = new Image()) {
+            // Perform various Docker image operations
             String imageName = dockerOperations.getImageName();
             dockerOperations.searchImages(imageName);
             System.out.println("Attempting to pull image: " + imageName);
@@ -60,6 +64,7 @@ public class Main {
         }, 0, 5, TimeUnit.SECONDS);
     }
 
+    // Method to get measurements from the MonitorThread
     private static List<MonitorThread.ContainerMeasurement> getMeasurements() {
         MonitorThread monitorThread = new MonitorThread();
         Thread thread = new Thread(monitorThread);
@@ -75,7 +80,7 @@ public class Main {
         return monitorThread.getContainerMeasurements();
     }
 
-    // Modify the displayMeasurementChart method to accept actual measurements
+    // Method to display the measurement chart
     private static void displayMeasurementChart(List<MonitorThread.ContainerMeasurement> measurements) {
         // Create the measurement chart with actual measurements
         MeasurementChart chart = new MeasurementChart("Container Measurements",
