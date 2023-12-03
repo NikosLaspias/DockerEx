@@ -24,9 +24,9 @@ public class MeasurementChart extends JFrame {
 
         // Creating the graph
         JFreeChart chart = ChartFactory.createBarChart(
-                "Container Measurements", // Τίτλος γραφήματος
-                "Containers", // Ετικέτα άξονα x
-                "Count", // Ετικέτα άξονα y
+                "Container Measurements", // Title of graph
+                "Containers", // Χ-axis label
+                "Count", // Y-axis label
                 dataset);
 
         // Προσθήκη του γραφήματος στο πάνελ
