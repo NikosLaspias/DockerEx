@@ -21,6 +21,7 @@ public class AppWithContainer {
     private final String imageName;
     private final String containerName;
 
+    // Get methods
     public AppWithContainer(DockerClient dockerClient, String imageName, String containerName) {
         this.dockerClient = dockerClient;
         this.imageName = imageName;
