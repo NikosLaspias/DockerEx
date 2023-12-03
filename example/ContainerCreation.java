@@ -44,7 +44,7 @@ public class ContainerCreation {
             startCmd.exec();
             System.out.println("Container started.");
         } else {
-            // Διακοπή του container
+            // Interruption of the container
             StopContainerCmd stopCmd = dockerClient.stopContainerCmd(containerId);
             stopCmd.exec();
             System.out.println("Container stopped.");
