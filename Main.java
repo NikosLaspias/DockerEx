@@ -12,9 +12,7 @@ import javax.swing.WindowConstants;
 public class Main {
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        // Δημιουργία και διαχείριση containers
-        ContainerCreation.manageContainers();
-        ExecutorThread.executeContainer();
+
         // Δημιουργία και χρήση της κλάσης AppWithContainer
         try (Scanner scanner = new Scanner(System.in)) {
             System.out.println("Enter the Docker image name:");
