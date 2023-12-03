@@ -15,19 +15,24 @@ public class MonitorThread implements Runnable, AutoCloseable {
     private final List<ContainerMeasurement> containerMeasurements;
     private final DefaultDockerClientConfig config;
 
+    // Constructor to initialize the MonitorThread
     public MonitorThread() {
+        // Set Docker host configuration
         this.config = DefaultDockerClientConfig.createDefaultConfigBuilder()
                 .withDockerHost("tcp://localhost:2375").build();
+        // Build Docker client using the configuration
         this.dockerClient = DockerClientBuilder.getInstance(config).build();
+        // Initialize the list to store container measurements
         this.containerMeasurements = new ArrayList<>();
     }
 
+    // Run method for continuous monitoring of containers
     @Override
     public void run() {
         try {
             while (true) {
                 monitorContainers();
-                Thread.sleep(5000);
+                Thread.sleep(5000); // Sleep for 5 seconds before the next monitoring cycle
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -40,13 +45,17 @@ public class MonitorThread implements Runnable, AutoCloseable {
         }
     }
 
+    // Method to monitor Docker containers and collect measurements
     private synchronized void monitorContainers() {
         System.out.println("Monitoring Containers:");
 
+        // Get the list of Docker containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
 
+        // Clear the previous container measurements
         containerMeasurements.clear();
 
+        // Iterate through containers and create ContainerMeasurement objects
         for (Container container : containers) {
             ContainerMeasurement measurement = new ContainerMeasurement(
                     container.getId(),
@@ -57,6 +66,7 @@ public class MonitorThread implements Runnable, AutoCloseable {
             containerMeasurements.add(measurement);
         }
 
+        // Display the collected container measurements
         for (ContainerMeasurement measurement : containerMeasurements) {
             System.out.println("Container ID: " + measurement.getId());
             System.out.println("Image Name: " + measurement.getImage());
@@ -67,6 +77,7 @@ public class MonitorThread implements Runnable, AutoCloseable {
         }
     }
 
+    // Method to get ports as a formatted string from a Docker container
     private String getPortsAsString(Container container) {
         ContainerPort[] ports = container.getPorts();
         StringBuilder result = new StringBuilder();
@@ -77,6 +88,7 @@ public class MonitorThread implements Runnable, AutoCloseable {
         return result.toString();
     }
 
+    // AutoCloseable interface method for proper resource cleanup
     @Override
     public void close() throws Exception {
         if (dockerClient != null) {
@@ -84,11 +96,12 @@ public class MonitorThread implements Runnable, AutoCloseable {
         }
     }
 
-    // Provide a method to get the container measurements
+    // Method to get the container measurements
     public List<ContainerMeasurement> getContainerMeasurements() {
         return new ArrayList<>(containerMeasurements);
     }
 
+    // Inner class representing a container measurement
     public static class ContainerMeasurement {
         private final String id;
         private final String image;
@@ -96,6 +109,7 @@ public class MonitorThread implements Runnable, AutoCloseable {
         private final String ports;
         private final String command;
 
+        // Constructor to initialize the ContainerMeasurement
         public ContainerMeasurement(String id, String image, String status, String ports, String command) {
             this.id = id;
             this.image = image;
@@ -104,6 +118,7 @@ public class MonitorThread implements Runnable, AutoCloseable {
             this.command = command;
         }
 
+        // Getter methods for accessing container measurement attributes
         public String getId() {
             return id;
         }
