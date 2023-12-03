@@ -28,10 +28,18 @@ public class AppWithContainer {
         this.containerName = containerName;
     }
 
+    public String getImageName() {
+        return this.imageName;
+    }
+
+    public String getContainerId() {
+        return this.containerName;
+    }
+
     public AppWithContainer(String dockerHost, String imageName, String containerName) {
-        DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder();
-        builder.withDockerHost(dockerHost);
-        this.dockerClient = DockerClientBuilder.getInstance(builder.build()).build();
+        DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
+                .withDockerHost(dockerHost).build();
+        this.dockerClient = DockerClientBuilder.getInstance(config).build();
         this.imageName = imageName;
         this.containerName = containerName;
     }

@@ -7,6 +7,8 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.InspectVolumeResponse;
+import com.github.dockerjava.api.command.ListVolumesResponse;
 
 import java.util.List;
 import java.util.Scanner;
@@ -15,7 +17,7 @@ public class ContainerCreation {
     private static String containerId;
 
     public static void manageContainers() {
-        // Δημιουργία ενός Docker client
+        // Creation of docker client
         DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
                 .withDockerHost("tcp://localhost:2375").build();
         DockerClient dockerClient = DockerClientBuilder.getInstance(config).build();
@@ -23,7 +25,7 @@ public class ContainerCreation {
         boolean state = false;
         do {
             try {
-                // ID ή όνομα του container που θέλετε να ελέγξετε
+                // ID of container that you want to control
                 System.out.println("Please enter the container ID that you want to control:");
                 containerId = input.next();
                 state = true;
@@ -34,7 +36,7 @@ public class ContainerCreation {
         } while (!state);
         input.close();
 
-        // Έλεγχος αν ο container είναι εκκινημένος
+        // control if the container is running
         InspectContainerResponse containerInfo = dockerClient.inspectContainerCmd(containerId).exec();
 
         Boolean isRunning = containerInfo.getState().getRunning();
@@ -55,6 +57,11 @@ public class ContainerCreation {
         System.out.println("Active Containers:");
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
         containers.forEach(c -> System.out.println(c.getId() + " " + c.getState()));
+        ListVolumesResponse volumesResponse = dockerClient.listVolumesCmd().exec();
+        List<InspectVolumeResponse> volumes = volumesResponse.getVolumes();
 
+        for (InspectVolumeResponse volume : volumes) {
+            System.out.println("Volume Name: " + volume.getName());
+        }
     }
 }

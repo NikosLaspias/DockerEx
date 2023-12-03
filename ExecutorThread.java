@@ -6,6 +6,7 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 
 import java.io.IOException;
@@ -13,7 +14,9 @@ import java.io.IOException;
 public class ExecutorThread {
 
     public static void executeContainer() throws IOException {
-        DockerClient dockerClient = DockerClientBuilder.getInstance().build();
+        DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
+                .withDockerHost("tcp://localhost:2375").build();
+        DockerClient dockerClient = DockerClientBuilder.getInstance(config).build();
 
         // Define the configuration for the container
         ExposedPort tcp80 = ExposedPort.tcp(80);
