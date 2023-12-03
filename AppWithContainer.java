@@ -22,12 +22,14 @@ public class AppWithContainer {
     private final String imageName;
     private final String containerName;
 
+    // Constructor
     public AppWithContainer(DockerClient dockerClient, String imageName, String containerName) {
         this.dockerClient = dockerClient;
         this.imageName = imageName;
         this.containerName = containerName;
     }
 
+    // Methods to get the name of the image and the id of container
     public String getImageName() {
         return this.imageName;
     }
@@ -45,28 +47,28 @@ public class AppWithContainer {
     }
 
     public void manageContainer() throws InterruptedException {
-        // Κατεβάστε την εικόνα αν δεν υπάρχει τοπικά
+        // Download image if not exists locally
         dockerClient.pullImageCmd(imageName)
                 .exec(new PullImageResultCallback())
                 .awaitCompletion();
 
-        // Δημιουργία του container
+        // Container creation
         CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(imageName)
                 .withName(containerName);
         CreateContainerResponse containerResponse = createContainerCmd.exec();
         String id = containerResponse.getId();
 
-        // Εκκίνηση του container
+        // Container start
         dockerClient.startContainerCmd(id).exec();
 
-        // Εκτέλεση ενός εντολής μέσα στο container (π.χ., ls)
+        // Executing a command inside the container (e.g., ls)
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(id)
                 .withAttachStdout(true)
                 .withAttachStderr(true)
                 .withCmd("ls")
                 .exec();
 
-        // Εκτέλεση της εντολής και εκτύπωση των αποτελεσμάτων
+        // Execute the command and print the results
         dockerClient.execStartCmd(execCreateCmdResponse.getId())
                 .exec(new com.github.dockerjava.api.async.ResultCallback.Adapter<Frame>() {
                     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
@@ -98,26 +100,26 @@ public class AppWithContainer {
                 })
                 .awaitCompletion();
 
-        // Αφήνουμε λίγο χρόνο για να εκκινήσει το container
+        // Allow some time for the container to start
         Thread.sleep(5000);
 
-        // Εμφάνιση των ενεργών containers
+        // List of active containers
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
         System.out.println("Active Containers");
         containers.forEach(c -> System.out.println(c.getId() + " " + c.getState()));
 
-        // Σταματήστε το container
+        // Container stop
         dockerClient.stopContainerCmd(id).exec();
 
-        // Περιμένουμε λίγο ξανά
+        // Allow some time again
         Thread.sleep(1000);
 
-        // Εμφάνιση των ενεργών containers μετά τον τερματισμό
+        // Show active containers after close
         System.out.println("-----------");
         containers = dockerClient.listContainersCmd().withShowAll(false).exec();
         containers.forEach(c -> System.out.println(c.getId() + " " + c.getState()));
 
-        // Καθαρισμός του container (διαγραφή)
+        // Delete the Container after a question
         System.out.println("Do you want to delete the container?");
         System.out.println("Valid responses Y or N");
         try (Scanner input = new Scanner(System.in)) {
