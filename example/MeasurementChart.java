@@ -29,7 +29,7 @@ public class MeasurementChart extends JFrame {
                 "Count", // Y-axis label
                 dataset);
 
-        // Προσθήκη του γραφήματος στο πάνελ
+        // Adding the graph to the panel
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new Dimension(560, 370));
         setContentPane(chartPanel);
