@@ -3,22 +3,20 @@ package com.example;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ContainerPort;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.Closeable;
 
-public class MonitorThread implements Runnable, AutoCloseable {
+public class MonitorThread implements Runnable, Closeable {
 
     private final DockerClient dockerClient;
-    private final List<ContainerMeasurement> containerMeasurements;
-    private final DefaultDockerClientConfig config;
+    final List<ContainerMeasurement> containerMeasurements;
 
     public MonitorThread() {
-        this.config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-                .withDockerHost("tcp://localhost:2375").build();
-        this.dockerClient = DockerClientBuilder.getInstance(config).build();
+        this.dockerClient = DockerClientBuilder.getInstance().build();
         this.containerMeasurements = new ArrayList<>();
     }
 
@@ -31,12 +29,6 @@ public class MonitorThread implements Runnable, AutoCloseable {
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -45,7 +37,7 @@ public class MonitorThread implements Runnable, AutoCloseable {
 
         List<Container> containers = dockerClient.listContainersCmd().exec();
 
-        containerMeasurements.clear();
+        containerMeasurements.clear(); // Καθαρίζει τη λίστα πριν από την ανανέωση
 
         for (Container container : containers) {
             ContainerMeasurement measurement = new ContainerMeasurement(
@@ -78,18 +70,17 @@ public class MonitorThread implements Runnable, AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         if (dockerClient != null) {
-            dockerClient.close();
+            try {
+                dockerClient.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    // Provide a method to get the container measurements
-    public List<ContainerMeasurement> getContainerMeasurements() {
-        return new ArrayList<>(containerMeasurements);
-    }
-
-    public static class ContainerMeasurement {
+    static class ContainerMeasurement {
         private final String id;
         private final String image;
         private final String status;
@@ -123,5 +114,11 @@ public class MonitorThread implements Runnable, AutoCloseable {
         public String getCommand() {
             return command;
         }
+
+    }
+
+    public static List<ContainerMeasurement> getContainerMeasurements(
+            List<ContainerMeasurement> containerMeasurements) {
+        return new ArrayList<>(containerMeasurements);
     }
 }
