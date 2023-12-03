@@ -19,7 +19,7 @@ public class MeasurementChart extends JFrame {
         super(title);
         this.containerMeasurements = containerMeasurements;
 
-        // Δημιουργία dataset από τα δεδομένα των μετρήσεων
+        // Creation of dataset from the measurement data
         CategoryDataset dataset = createDataset();
 
         // Δημιουργία του γραφήματος
