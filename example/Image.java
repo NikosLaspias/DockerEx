@@ -32,7 +32,7 @@ public class Image implements AutoCloseable {
         List<com.github.dockerjava.api.model.Image> images = dockerClient.listImagesCmd().exec();
 
         if (!images.isEmpty()) {
-            // Επιλέξτε την πρώτη εικόνα από τη λίστα (μπορεί να πρέπει να προσαρμόσετε
+            // Select the first image from the list (you may need to customize the
             // ανάλογα με τις ανάγκες σας)
             String imageName = images.get(0).getRepoTags()[0];
             return imageName;
