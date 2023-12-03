@@ -39,7 +39,7 @@ public class ContainerCreation {
         Boolean isRunning = containerInfo.getState().getRunning();
 
         if (!isRunning) {
-            // Εκκίνηση του container
+            // Starting the container
             StartContainerCmd startCmd = dockerClient.startContainerCmd(containerId);
             startCmd.exec();
             System.out.println("Container started.");
