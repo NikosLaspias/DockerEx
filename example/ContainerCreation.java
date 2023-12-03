@@ -16,7 +16,7 @@ public class ContainerCreation {
     private static String containerId;
 
     public static void manageContainers() {
-        // Δημιουργία ενός Docker client
+        // Creating a Docker client
         DockerClient dockerClient = DockerClientBuilder.getInstance().build();
         Scanner input = new Scanner(System.in);
         boolean state = false;
