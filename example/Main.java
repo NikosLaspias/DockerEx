@@ -13,7 +13,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        // Δημιουργία και χρήση της κλάσης AppWithContainer
+        // Creating and using the AppWithContainer class
         try (Scanner scanner = new Scanner(System.in)) {
             System.out.println("Enter the Docker image name:");
             String imageName = scanner.nextLine();
