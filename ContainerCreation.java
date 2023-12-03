@@ -42,18 +42,18 @@ public class ContainerCreation {
         Boolean isRunning = containerInfo.getState().getRunning();
 
         if (!isRunning) {
-            // Εκκίνηση του container
+            // Start the container
             StartContainerCmd startCmd = dockerClient.startContainerCmd(containerId);
             startCmd.exec();
             System.out.println("Container started.");
         } else {
-            // Διακοπή του container
+            // Stop the container
             StopContainerCmd stopCmd = dockerClient.stopContainerCmd(containerId);
             stopCmd.exec();
             System.out.println("Container stopped.");
         }
 
-        // Εμφάνιση λίστας ενεργών containers με το αντιστοιχο id και την κατάσταση τους
+        // Display a list of active containers with their respective id and status
         System.out.println("Active Containers:");
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
         containers.forEach(c -> System.out.println(c.getId() + " " + c.getState()));
