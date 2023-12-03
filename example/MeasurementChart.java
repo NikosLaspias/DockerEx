@@ -22,7 +22,7 @@ public class MeasurementChart extends JFrame {
         // Creation of dataset from the measurement data
         CategoryDataset dataset = createDataset();
 
-        // Δημιουργία του γραφήματος
+        // Creating the graph
         JFreeChart chart = ChartFactory.createBarChart(
                 "Container Measurements", // Τίτλος γραφήματος
                 "Containers", // Ετικέτα άξονα x
