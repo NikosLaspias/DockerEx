@@ -110,7 +110,7 @@ public class AppWithContainer {
         // We wait a while again
         Thread.sleep(1000);
 
-        // Show active containers after termination
+        // Show active containers after the termination
         System.out.println("-----------");
         containers = dockerClient.listContainersCmd().withShowAll(false).exec();
         containers.forEach(c -> System.out.println(c.getId() + " " + c.getState()));
