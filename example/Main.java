@@ -25,7 +25,7 @@ public class Main {
             app.manageContainer();
         }
 
-        // Εργασίες πάνω στις εικόνες Docker
+        // Working on Docker images
         try (Image dockerOperations = new Image()) {
             String imageName = dockerOperations.getImageName();
             dockerOperations.searchImages(imageName);
