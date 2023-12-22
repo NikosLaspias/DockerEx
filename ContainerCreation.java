@@ -2,6 +2,7 @@ package com.example;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Network;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.api.command.StartContainerCmd;
@@ -29,7 +30,7 @@ public class ContainerCreation {
                 System.out.println("Please enter the container ID that you want to control:");
                 containerId = input.next();
                 state = true;
-            } catch (java.util.InputMismatchException e) {
+            } catch (Exception e) {
                 System.err.println("Invalid container ID.Please try again ");
                 input.next();
             }
@@ -62,6 +63,12 @@ public class ContainerCreation {
 
         for (InspectVolumeResponse volume : volumes) {
             System.out.println("Volume Name: " + volume.getName());
+        }
+
+        List<Network> networks = dockerClient.listNetworksCmd().exec();
+        for (Network network : networks) {
+            System.out.println("Network ID: " + network.getId());
+            System.out.println("Network Name: " + network.getName());
         }
     }
 }

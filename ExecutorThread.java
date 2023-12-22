@@ -13,29 +13,57 @@ import java.io.IOException;
 
 public class ExecutorThread {
 
-    public static void executeContainer() throws IOException {
+    private final DockerClient dockerClient;
+
+    public ExecutorThread() {
+        // Configure Docker client
         DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
                 .withDockerHost("tcp://localhost:2375").build();
-        DockerClient dockerClient = DockerClientBuilder.getInstance(config).build();
+        this.dockerClient = DockerClientBuilder.getInstance(config).build();
+    }
 
-        // Define the configuration for the container
+    // Method to start a Docker container
+    public void startContainer(String containerId) {
+        try {
+            // Start the container based on the containerId
+            dockerClient.startContainerCmd(containerId).exec();
+
+            // If everything goes well, print a message
+            System.out.println("Container started: " + containerId);
+        } catch (Exception e) {
+            // If an error occurs, print the error
+            e.printStackTrace();
+        }
+    }
+
+    // Method to stop a Docker container
+    public void stopContainer(String containerId) {
+        try {
+            // Stop the container based on the containerId
+            dockerClient.stopContainerCmd(containerId).exec();
+
+            // If everything goes well, print a message
+            System.out.println("Container stopped: " + containerId);
+        } catch (Exception e) {
+            // If an error occurs, print the error
+            e.printStackTrace();
+        }
+    }
+
+    // Method to execute a Docker container
+    public void executeContainer() throws IOException {
         ExposedPort tcp80 = ExposedPort.tcp(80);
-
-        // Use PortBinding.parse to set the IP address and host port
         PortBinding portBinding = PortBinding.parse("0.0.0.0:8080");
-
-        HostConfig hostConfig = new HostConfig();
-        hostConfig.withPortBindings(portBinding);
+        HostConfig hostConfig = new HostConfig().withPortBindings(portBinding);
 
         // Create and start the container
-        CreateContainerResponse container = createAndStartContainer(dockerClient, tcp80, hostConfig);
+        CreateContainerResponse container = createAndStartContainer(tcp80, hostConfig);
 
         // Stop the container (replace "CONTAINER_ID" with the actual container ID)
         dockerClient.stopContainerCmd(container.getId()).exec();
     }
 
-    private static CreateContainerResponse createAndStartContainer(DockerClient dockerClient, ExposedPort exposedPort,
-            HostConfig hostConfig) {
+    private CreateContainerResponse createAndStartContainer(ExposedPort exposedPort, HostConfig hostConfig) {
         // Create the container
         CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd("nginx")
                 .withExposedPorts(exposedPort)

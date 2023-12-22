@@ -5,12 +5,10 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ContainerPort;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class MonitorThread implements Runnable, AutoCloseable {
-
     private final DockerClient dockerClient;
     private final List<ContainerMeasurement> containerMeasurements;
     private final DefaultDockerClientConfig config;
@@ -24,6 +22,7 @@ public class MonitorThread implements Runnable, AutoCloseable {
         this.dockerClient = DockerClientBuilder.getInstance(config).build();
         // Initialize the list to store container measurements
         this.containerMeasurements = new ArrayList<>();
+
     }
 
     // Run method for continuous monitoring of containers
@@ -101,6 +100,63 @@ public class MonitorThread implements Runnable, AutoCloseable {
         return new ArrayList<>(containerMeasurements);
     }
 
+    public int getActiveDockerInstances() {
+        int activeInstances = 0;
+
+        // Control the list of containers to get the active containers
+        for (ContainerMeasurement measurement : containerMeasurements) {
+            if (isContainerActive(measurement)) {
+                activeInstances++;
+            }
+        }
+
+        return activeInstances;
+    }
+
+    public List<String> getActiveDockerInstancesList() {
+        List<String> activeInstances = new ArrayList<>();
+
+        for (ContainerMeasurement measurement : containerMeasurements) {
+            if (isContainerActive(measurement)) {
+                activeInstances.add(measurement.getId());
+            }
+        }
+
+        return activeInstances;
+    }
+
+    public List<String> getInactiveDockerInstancesList() {
+        List<String> inactiveInstances = new ArrayList<>();
+
+        for (ContainerMeasurement measurement : containerMeasurements) {
+            if (!isContainerActive(measurement)) {
+                inactiveInstances.add(measurement.getId());
+            }
+        }
+
+        return inactiveInstances;
+    }
+
+    // Method to get the number of inactive Docker instances
+    public int getInactiveDockerInstances() {
+        List<Container> allContainers = dockerClient.listContainersCmd().exec();
+
+        // Count inactive containers
+        int inactiveInstances = 0;
+        for (Container container : allContainers) {
+            if (!container.getState().equals("running")) {
+                inactiveInstances++;
+            }
+        }
+
+        return inactiveInstances;
+    }
+
+    // Control if a container is running
+    private boolean isContainerActive(ContainerMeasurement measurement) {
+        return "running".equalsIgnoreCase(measurement.getStatus());
+    }
+
     // Inner class representing a container measurement
     public static class ContainerMeasurement {
         private final String id;
@@ -109,7 +165,6 @@ public class MonitorThread implements Runnable, AutoCloseable {
         private final String ports;
         private final String command;
 
-        // Constructor to initialize the ContainerMeasurement
         public ContainerMeasurement(String id, String image, String status, String ports, String command) {
             this.id = id;
             this.image = image;
@@ -118,7 +173,6 @@ public class MonitorThread implements Runnable, AutoCloseable {
             this.command = command;
         }
 
-        // Getter methods for accessing container measurement attributes
         public String getId() {
             return id;
         }
