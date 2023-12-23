@@ -32,7 +32,6 @@
         <artifactId>docker-java</artifactId>
         <version>3.2.9</version> <!-- Check for the latest version on Maven Central -->
     </dependency>
-</dependencies>
 
   <dependency>
     <groupId>org.diirt.javafx</groupId>
