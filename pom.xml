@@ -13,6 +13,27 @@
 <maven.compiler.target>21</maven.compiler.target>
 </properties>
 <dependencies>
+    <!-- JavaFX -->
+    <dependency>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-controls</artifactId>
+        <version>17</version>
+    </dependency>
+    <dependency>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-fxml</artifactId>
+        <version>17</version>
+    </dependency>
+    <!-- Add any other JavaFX dependencies you need -->
+
+    <!-- Docker Java API -->
+    <dependency>
+        <groupId>com.github.docker-java</groupId>
+        <artifactId>docker-java</artifactId>
+        <version>3.2.9</version> <!-- Check for the latest version on Maven Central -->
+    </dependency>
+</dependencies>
+
   <dependency>
     <groupId>org.diirt.javafx</groupId>
     <artifactId>javafx-all</artifactId>
