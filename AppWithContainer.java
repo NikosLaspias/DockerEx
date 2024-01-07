@@ -11,7 +11,11 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.api.model.Frame;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextInputDialog;
+import javafx.stage.Screen;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
@@ -101,23 +105,10 @@ public class AppWithContainer {
                 })
                 .awaitCompletion();
 
-        // Allow some time for the container to start
-        Thread.sleep(5000);
+        showAlert("List with the contaners Containers",
+                getContainerInfo(dockerClient.listContainersCmd().withShowAll(true).exec()));
 
-        // List of active containers
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
-        showAlert("Active Containers", getContainerInfo(containers));
-
-        // Container stop
-        dockerClient.stopContainerCmd(id).exec();
-
-        // Allow some time again
-        Thread.sleep(1000);
-
-        // Show active containers after close
-        showAlert("Active Containers After Stop",
-                getContainerInfo(dockerClient.listContainersCmd().withShowAll(false).exec()));
-
+        Thread.sleep(8000);
         // Delete the Container after a question
         Platform.runLater(() -> {
             TextInputDialog dialog = new TextInputDialog();
@@ -147,13 +138,38 @@ public class AppWithContainer {
         return info.toString();
     }
 
-    // Display an Alert with only content text
     private void showAlert(String title, String content) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle(title);
             alert.setHeaderText(null);
-            alert.setContentText(content);
+
+            // Create a TextArea to display content
+            TextArea textArea = new TextArea(content);
+            textArea.setEditable(false);
+            textArea.setWrapText(true);
+
+            // Wrap the TextArea in a ScrollPane
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setContent(textArea);
+
+            // Set the content of the Alert to the ScrollPane
+            alert.getDialogPane().setContent(scrollPane);
+
+            // Center the window on the screen
+            alert.setOnShown(e -> {
+                alert.getDialogPane().getScene().getWindow().centerOnScreen();
+                alert.getDialogPane().getScene().getWindow().sizeToScene();
+
+                // Set the position of the window
+                double screenWidth = Screen.getPrimary().getVisualBounds().getWidth();
+                double screenHeight = Screen.getPrimary().getVisualBounds().getHeight();
+                alert.getDialogPane().getScene().getWindow()
+                        .setX((screenWidth - alert.getDialogPane().getScene().getWindow().getWidth()) / 2);
+                alert.getDialogPane().getScene().getWindow()
+                        .setY((screenHeight - alert.getDialogPane().getScene().getWindow().getHeight()) / 2);
+            });
+
             alert.showAndWait();
         });
     }
