@@ -9,12 +9,13 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.api.model.Frame;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TextInputDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.List;
-import java.util.Scanner;
 
 public class AppWithContainer {
 
@@ -105,8 +106,7 @@ public class AppWithContainer {
 
         // List of active containers
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
-        System.out.println("Active Containers");
-        containers.forEach(c -> System.out.println(c.getId() + " " + c.getState()));
+        showAlert("Active Containers", getContainerInfo(containers));
 
         // Container stop
         dockerClient.stopContainerCmd(id).exec();
@@ -115,20 +115,46 @@ public class AppWithContainer {
         Thread.sleep(1000);
 
         // Show active containers after close
-        System.out.println("-----------");
-        containers = dockerClient.listContainersCmd().withShowAll(false).exec();
-        containers.forEach(c -> System.out.println(c.getId() + " " + c.getState()));
+        showAlert("Active Containers After Stop",
+                getContainerInfo(dockerClient.listContainersCmd().withShowAll(false).exec()));
 
         // Delete the Container after a question
-        System.out.println("Do you want to delete the container?");
-        System.out.println("Valid responses Y or N");
-        try (Scanner input = new Scanner(System.in)) {
-            String response = input.next();
-            if (response.equals("Y")) {
-                dockerClient.removeContainerCmd(id).exec();
-            } else {
-                System.exit(0);
-            }
-        }
+        Platform.runLater(() -> {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Delete Container");
+            dialog.setHeaderText(null);
+            dialog.setContentText("Do you want to delete the container? (Valid responses Y or N)");
+
+            dialog.showAndWait().ifPresent(response -> {
+                if (response.equals("Y")) {
+                    dockerClient.removeContainerCmd(id).exec();
+                    showAlert("Container Deleted", "Container deleted successfully.");
+                } else {
+                    System.exit(0);
+                }
+            });
+        });
+    }
+
+    private String getContainerInfo(List<Container> containers) {
+        // Create a StringBuilder for collecting information about containers
+        StringBuilder info = new StringBuilder("Container Info:\n");
+
+        // Add information for each container to the StringBuilder
+        containers.forEach(c -> info.append(c.getId()).append(" ").append(c.getState()).append("\n"));
+
+        // Return the String containing information about containers
+        return info.toString();
+    }
+
+    // Display an Alert with only content text
+    private void showAlert(String title, String content) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(content);
+            alert.showAndWait();
+        });
     }
 }

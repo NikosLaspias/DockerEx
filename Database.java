@@ -1,5 +1,8 @@
 package com.example;
 
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextInputDialog;
 import java.time.LocalDateTime;
 import java.sql.SQLException;
 import java.sql.Connection;
@@ -8,40 +11,68 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * The Database class handles the interaction with the database,
+ * including establishing connections, inserting measurements, and querying
+ * data.
+ */
 
 public class Database implements AutoCloseable {
-    private static int measurementNumber = 1;
-    private static final Scanner scanner = new Scanner(System.in);
+    // Static variables for database connection information
     private static String databaseURL;
     private static String databaseUser;
     private static String databasePassword;
+
+    // Instance variables
     private Connection connection;
     private static LocalDateTime currentDateTime;
+    private static int measurementNumber = 1;
 
-    // Constructor for creating a database connection
+    /**
+     * Constructor for creating a database connection.
+     * Prompts the user for database connection information.
+     */
     public Database() {
+        // Prompt user for database connection information
         inputDatabaseInfo();
+        // Initialize the database connection
         initialize();
     }
 
+    // Method to prompt the user for database connection information
     private void inputDatabaseInfo() {
-        System.out.println("Enter Database URL:");
-        databaseURL = scanner.nextLine();
+        // Use TextInputDialog to get database URL, user, and password
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Database Connection");
+        dialog.setHeaderText("Enter Database Connection Information");
 
-        System.out.println("Enter Database User:");
-        databaseUser = scanner.nextLine();
+        dialog.setContentText("Database URL:");
+        Optional<String> urlResult = dialog.showAndWait();
+        urlResult.ifPresent(url -> databaseURL = url);
 
-        System.out.println("Enter Database Password:");
-        databasePassword = scanner.nextLine();
+        dialog.setContentText("Database User:");
+        Optional<String> userResult = dialog.showAndWait();
+        userResult.ifPresent(user -> databaseUser = user);
+
+        dialog.setContentText("Database Password:");
+        Optional<String> passwordResult = dialog.showAndWait();
+        passwordResult.ifPresent(password -> databasePassword = password);
     }
 
+    /**
+     * Initializes the database connection.
+     */
     private void initialize() {
         try {
             System.out.println("Connecting to the database...");
+            // Establish the database connection
             connection = DriverManager.getConnection(databaseURL, databaseUser, databasePassword);
-            System.out.println("Connected to the database!");
+            showAlert("Connected to the database!");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -55,7 +86,12 @@ public class Database implements AutoCloseable {
         }
     }
 
-    // Method to insert container measurements into the database
+    /**
+     * Inserts container measurements into the database.
+     *
+     * @param measurements The list of container measurements to be inserted.
+     */
+
     public void insertContainerMeasurements(List<MonitorThread.ContainerMeasurement> measurements) {
         try {
             System.out.println("Successfully connected to the database!");
@@ -71,7 +107,13 @@ public class Database implements AutoCloseable {
         }
     }
 
-    // Method to insert a single measurement into the database
+    /**
+     * Inserts a single measurement into the database.
+     *
+     * @param measurement The container measurement to be inserted.
+     * @throws SQLException If a database access error occurs.
+     */
+
     private void insertMeasurement(MonitorThread.ContainerMeasurement measurement) throws SQLException {
         try (PreparedStatement preparedStatement = connection.prepareStatement(
                 "INSERT INTO ContainerMeasurements (container_id, image, status, ports, command) VALUES (?, ?, ?, ?, ?)",
@@ -97,7 +139,7 @@ public class Database implements AutoCloseable {
                 PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, measurementDate);
-            preparedStatement.setInt(2, measurementNumber++);
+            preparedStatement.setInt(2, measurementNumber);
 
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -117,28 +159,23 @@ public class Database implements AutoCloseable {
         return measurementNumber++;
     }
 
-    public List<MonitorThread.ContainerMeasurement> getMeasurementsByDateRange(String startDate, String endDate) {
-        List<MonitorThread.ContainerMeasurement> measurements = new ArrayList<>();
+    // Method to retrieve measurements within a date range
+    public List<Map<String, Object>> getMeasurementsByDateRange(String startDate, String endDate) {
+        List<Map<String, Object>> measurements = new ArrayList<>();
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(
-                "SELECT * FROM ContainerMeasurements WHERE measurement_date BETWEEN ? AND ?")) {
+                "SELECT measurement_date, measurement_id FROM MeasurementData WHERE measurement_date BETWEEN ? AND ?")) {
 
             preparedStatement.setString(1, startDate);
             preparedStatement.setString(2, endDate);
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    // Get the results for the container
-                    String id = resultSet.getString("container_id");
-                    String image = resultSet.getString("image");
-                    String status = resultSet.getString("status");
-                    String ports = resultSet.getString("ports");
-                    String command = resultSet.getString("command");
+                    Map<String, Object> measurementInfo = new HashMap<>();
+                    measurementInfo.put("measurement_date", resultSet.getString("measurement_date"));
+                    measurementInfo.put("measurement_id", resultSet.getInt("measurement_id"));
 
-                    MonitorThread.ContainerMeasurement measurement = new MonitorThread.ContainerMeasurement(
-                            id, image, status, ports, command);
-
-                    measurements.add(measurement);
+                    measurements.add(measurementInfo);
                 }
             }
 
@@ -149,21 +186,42 @@ public class Database implements AutoCloseable {
         return measurements;
     }
 
+    /**
+     * Disconnects from the database.
+     */
+
     public void disconnect() {
         try {
-            System.out.println("Do you want to disconnect from the database? (y/n)");
-            String userInput = scanner.nextLine();
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Disconnect from Database");
+            alert.setHeaderText(null);
+            alert.setContentText("Do you want to disconnect from the database?");
 
-            if (userInput.trim().equalsIgnoreCase("y")) {
+            if (alert.showAndWait().orElse(null) == ButtonType.OK) {
                 if (connection != null && !connection.isClosed()) {
                     connection.close();
-                    System.out.println("Disconnected from the database.");
+                    showAlert("Disconnected from the database.");
                 } else {
-                    System.out.println("Not connected to the database.");
+                    showAlert("Not connected to the database.");
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    // Method to display an information alert
+
+    /**
+     * Displays an information alert using JavaFX.
+     *
+     * @param content The content text of the alert.
+     */
+    private void showAlert(String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Information");
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 }

@@ -4,112 +4,186 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.api.command.InspectImageResponse;
-import com.github.dockerjava.api.model.ContainerConfig;
-
+import javafx.application.Platform;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TextArea;
 import java.io.IOException;
 import java.util.List;
+import javafx.stage.Stage;
+
+/**
+ * The Image class encapsulates Docker image-related operations.
+ */
 
 public class Image implements AutoCloseable {
 
-    // Docker client and configuration objects
     private DockerClient dockerClient;
     private DefaultDockerClientConfig config;
 
-    // Constructor to initialize Docker client and configuration
-    public Image() {
-        // Set Docker host configuration
+    /**
+     * Constructs an Image object with the specified output TextArea.
+     *
+     * @param outputTextArea The TextArea where the results of Docker operations
+     *                       will be displayed.
+     */
+
+    public Image(TextArea outputTextArea) {
         this.config = DefaultDockerClientConfig.createDefaultConfigBuilder()
                 .withDockerHost("tcp://localhost:2375").build();
-        // Build Docker client using the configuration
         this.dockerClient = DockerClientBuilder.getInstance(config).build();
     }
 
-    // Method to pull an image if it does not exist locally
+    /**
+     * Pulls the Docker image if it does not already exist.
+     *
+     * @param imageName The name of the Docker image to pull.
+     */
+
     public void pullImageIfNotExists(String imageName) {
         List<com.github.dockerjava.api.model.Image> images = dockerClient.listImagesCmd().withImageNameFilter(imageName)
                 .exec();
-
+        StringBuilder message = new StringBuilder();
         if (images.isEmpty()) {
             pullImage(imageName);
-            System.out.println("Image was not already pulled. Image pulled successfully.");
+            message.append("Image was not already pulled. Image pulled successfully.\n");
         } else {
-            System.out.println("Image already exists.");
+            message.append("Image already exists.\n");
         }
+        showAlert("Image Pull Result", message.toString());
     }
 
-    // Getter method to retrieve Docker host information
-    public String getImageName() {
-        return config.getDockerHost().getHost();
-    }
+    /**
+     * Pulls the Docker image with the specified name.
+     *
+     * @param imageName The name of the Docker image to pull.
+     */
 
-    // Private method to pull a Docker image
-    private void pullImage(String imageName) {
+    public void pullImage(String imageName) {
         try {
             dockerClient.pullImageCmd(imageName).exec(null);
-            System.out.println("Image pulled successfully.");
+            showAlert("Image Pulled", "Image pulled successfully.");
         } catch (com.github.dockerjava.api.exception.NotFoundException e) {
-            System.err.println("Error pulling image: Image not found - " + e.getMessage());
+            showAlert("Error", "Error pulling image: Image not found - " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Error pulling image: " + e.getMessage());
+            showAlert("Error", "Error pulling image: " + e.getMessage());
         }
     }
 
-    // Method to list Docker images
-    public void listImages() {
+    /**
+     * Shows a list of Docker images and their information.
+     */
+
+    public void showImageList() {
         List<com.github.dockerjava.api.model.Image> images = dockerClient.listImagesCmd().exec();
-        System.out.println("List of Docker images:");
-        for (com.github.dockerjava.api.model.Image image : images) {
-            // Display image information
-            System.out.println("Image ID: " + image.getId());
-            System.out.println("Repo Tags: " + String.join(", ", image.getRepoTags()));
-            System.out.println("Created: " + image.getCreated());
-            System.out.println("Size: " + image.getSize());
-            System.out.println("------------------------");
-        }
-    }
+        StringBuilder imageInfo = new StringBuilder("List of Docker images:\n");
 
-    // Method to search for Docker images using a search term
-    public void searchImages(String searchTerm) {
-        dockerClient.searchImagesCmd(searchTerm).exec().forEach(result -> {
-            // Display search results
-            System.out.println("Image Name: " + result.getName());
-            System.out.println("Description: " + result.getDescription());
-            System.out.println("------------------------");
+        for (com.github.dockerjava.api.model.Image image : images) {
+            imageInfo.append("Image ID: ").append(image.getId()).append("\n");
+            imageInfo.append("Repo Tags: ").append(String.join(", ", image.getRepoTags())).append("\n");
+            imageInfo.append("Created: ").append(image.getCreated()).append("\n");
+            imageInfo.append("Size: ").append(image.getSize()).append("\n");
+            imageInfo.append("------------------------\n");
+        }
+
+        Platform.runLater(() -> {
+            showImageListDialog(imageInfo.toString());
         });
     }
 
-    // Method to inspect a Docker image
+    // Show the list of all images
+    private void showImageListDialog(String imageInfo) {
+        Stage imageListStage = new Stage();
+        imageListStage.setTitle("Docker Image List");
+
+        TextArea imageInfoTextArea = new TextArea();
+        imageInfoTextArea.setEditable(false);
+        imageInfoTextArea.setWrapText(true);
+        imageInfoTextArea.setText(imageInfo);
+
+        Scene imageListScene = new Scene(imageInfoTextArea, 800, 600);
+        imageListStage.setScene(imageListScene);
+        imageListStage.show();
+    }
+
+    // search a specific image
+    public void searchImages(String imageName) {
+        InspectImageResponse inspectResponse = dockerClient.inspectImageCmd(imageName).exec();
+        showAlert("Docker Image Information",
+                "Image Name: " + imageName + "\n" +
+                        "Tags: " + String.join(", ", inspectResponse.getRepoTags()) + "\n" +
+                        "Commands: " + inspectResponse.getConfig().getCmd());
+    }
+
     public InspectImageResponse inspectImage(String imageId) {
         return dockerClient.inspectImageCmd(imageId).exec();
     }
 
-    // Method to remove a Docker image
     public void removeImage(String imageId) {
         try {
             dockerClient.removeImageCmd(imageId).exec();
-            System.out.println("Image removed successfully.");
+            showAlert("Image Removed", "Image removed successfully.");
         } catch (Exception e) {
-            System.err.println("Error removing image: " + e.getMessage());
+            showAlert("Error Removing Image", "Error removing image: " + e.getMessage());
         }
     }
 
-    // Method to show pull history for a Docker image
+    /**
+     * Displays a pull history for a Docker image.
+     *
+     * @param imageName The name of the Docker image.
+     */
     public void showPullHistory(String imageName) {
         List<com.github.dockerjava.api.model.Image> images = dockerClient.listImagesCmd().withImageNameFilter(imageName)
                 .exec();
+
+        StringBuilder pullHistory = new StringBuilder("Pull History for Image:\n");
+
         for (com.github.dockerjava.api.model.Image image : images) {
-            // Display pull history information
-            System.out.println("Pull History for Image ID " + image.getId());
-            ContainerConfig containerConfig = inspectImage(image.getId()).getContainerConfig();
-            System.out.println("Commands executed during pull: " + containerConfig.getCmd());
-            System.out.println("------------------------");
+            pullHistory.append("Image ID: ").append(image.getId()).append("\n");
+            pullHistory.append("Commands executed during pull: ")
+                    .append(inspectImage(image.getId()).getContainerConfig().getCmd()).append("\n");
+            pullHistory.append("------------------------\n");
         }
+
+        Platform.runLater(() -> {
+            showPullHistoryDialog(pullHistory.toString());
+        });
     }
 
-    // AutoCloseable interface method for proper resource cleanup
+    private void showPullHistoryDialog(String pullHistory) {
+        Stage pullHistoryStage = new Stage();
+        pullHistoryStage.setTitle("Pull History for Image");
+
+        TextArea pullHistoryTextArea = new TextArea();
+        pullHistoryTextArea.setEditable(false);
+        pullHistoryTextArea.setWrapText(true);
+        pullHistoryTextArea.setText(pullHistory);
+
+        Scene pullHistoryScene = new Scene(pullHistoryTextArea, 800, 600);
+        pullHistoryStage.setScene(pullHistoryScene);
+        pullHistoryStage.show();
+    }
+
+    /**
+     * Displays an alert with the specified title and content.
+     *
+     * @param title   The title of the alert.
+     * @param content The content of the alert.
+     */
+
+    private void showAlert(String title, String content) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(content);
+            alert.showAndWait();
+        });
+    }
+
     @Override
     public void close() {
-        // Close the Docker client if it's not null
         if (dockerClient != null) {
             try {
                 dockerClient.close();

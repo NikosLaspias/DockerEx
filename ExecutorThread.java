@@ -8,13 +8,22 @@ import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
-
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import java.io.IOException;
 
+/**
+ * The ExecutorThread class is responsible for starting, stopping, and executing
+ * Docker containers.
+ */
 public class ExecutorThread {
 
     private final DockerClient dockerClient;
 
+    /**
+     * Constructor to initialize the ExecutorThread.
+     * Configures the Docker client.
+     */
     public ExecutorThread() {
         // Configure Docker client
         DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
@@ -22,35 +31,71 @@ public class ExecutorThread {
         this.dockerClient = DockerClientBuilder.getInstance(config).build();
     }
 
-    // Method to start a Docker container
+    /**
+     * Starts a Docker container based on the provided container ID.
+     *
+     * @param containerId The ID of the container to start.
+     */
     public void startContainer(String containerId) {
         try {
             // Start the container based on the containerId
             dockerClient.startContainerCmd(containerId).exec();
-
-            // If everything goes well, print a message
-            System.out.println("Container started: " + containerId);
+            // If everything goes well, show an alert message
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Container Started");
+                alert.setHeaderText(null);
+                alert.setContentText("Container started: " + containerId);
+                alert.showAndWait();
+            });
         } catch (Exception e) {
-            // If an error occurs, print the error
+            // If an error occurs, show an alert message
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText(null);
+                alert.setContentText("Error starting container: " + e.getMessage());
+                alert.showAndWait();
+            });
             e.printStackTrace();
         }
     }
 
-    // Method to stop a Docker container
+    /**
+     * Stops a Docker container based on the provided container ID.
+     *
+     * @param containerId The ID of the container to stop.
+     */
     public void stopContainer(String containerId) {
         try {
             // Stop the container based on the containerId
             dockerClient.stopContainerCmd(containerId).exec();
-
-            // If everything goes well, print a message
-            System.out.println("Container stopped: " + containerId);
+            // If everything goes well, show an alert message
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Container Stopped");
+                alert.setHeaderText(null);
+                alert.setContentText("Container stopped: " + containerId);
+                alert.showAndWait();
+            });
         } catch (Exception e) {
-            // If an error occurs, print the error
+            // If an error occurs, show an alert message
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText(null);
+                alert.setContentText("Error stopping container: " + e.getMessage());
+                alert.showAndWait();
+            });
             e.printStackTrace();
         }
     }
 
-    // Method to execute a Docker container
+    /**
+     * Executes a Docker container.
+     *
+     * @throws IOException If an I/O error occurs.
+     */
     public void executeContainer() throws IOException {
         ExposedPort tcp80 = ExposedPort.tcp(80);
         PortBinding portBinding = PortBinding.parse("0.0.0.0:8080");

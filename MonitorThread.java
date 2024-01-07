@@ -1,5 +1,13 @@
 package com.example;
 
+import javafx.application.Platform;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TextArea;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ContainerPort;
@@ -8,12 +16,20 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The MonitorThread class is responsible for monitoring Docker containers
+ * and collecting measurements at regular intervals.
+ */
+
 public class MonitorThread implements Runnable, AutoCloseable {
     private final DockerClient dockerClient;
     private final List<ContainerMeasurement> containerMeasurements;
     private final DefaultDockerClientConfig config;
+    private boolean executedOnce = false;
 
-    // Constructor to initialize the MonitorThread
+    /**
+     * Constructor to initialize the MonitorThread.
+     */
     public MonitorThread() {
         // Set Docker host configuration
         this.config = DefaultDockerClientConfig.createDefaultConfigBuilder()
@@ -25,15 +41,15 @@ public class MonitorThread implements Runnable, AutoCloseable {
 
     }
 
-    // Run method for continuous monitoring of containers
     @Override
     public void run() {
         try {
-            while (true) {
+            // Monitor containers only if measurements haven't been displayed yet
+            if (!executedOnce) {
                 monitorContainers();
-                Thread.sleep(5000); // Sleep for 5 seconds before the next monitoring cycle
+                executedOnce = true;
             }
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
@@ -44,10 +60,28 @@ public class MonitorThread implements Runnable, AutoCloseable {
         }
     }
 
-    // Method to monitor Docker containers and collect measurements
-    private synchronized void monitorContainers() {
-        System.out.println("Monitoring Containers:");
+    /**
+     * Displays an information alert using JavaFX.
+     *
+     * @param title   The title of the alert.
+     * @param content The content text of the alert.
+     */
 
+    private void showAlert(String title, String content) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(content);
+            alert.showAndWait();
+        });
+    }
+
+    /**
+     * Monitors Docker containers and collects measurements.
+     */
+    private synchronized void monitorContainers() {
+        showAlert("Monitoring Containers", "Containers Measurements");
         // Get the list of Docker containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
 
@@ -65,15 +99,6 @@ public class MonitorThread implements Runnable, AutoCloseable {
             containerMeasurements.add(measurement);
         }
 
-        // Display the collected container measurements
-        for (ContainerMeasurement measurement : containerMeasurements) {
-            System.out.println("Container ID: " + measurement.getId());
-            System.out.println("Image Name: " + measurement.getImage());
-            System.out.println("Status: " + measurement.getStatus());
-            System.out.println("Command: " + measurement.getCommand());
-            System.out.println("Ports: " + measurement.getPorts());
-            System.out.println("------------------------");
-        }
     }
 
     // Method to get ports as a formatted string from a Docker container
@@ -87,12 +112,48 @@ public class MonitorThread implements Runnable, AutoCloseable {
         return result.toString();
     }
 
-    // AutoCloseable interface method for proper resource cleanup
-    @Override
-    public void close() throws Exception {
-        if (dockerClient != null) {
-            dockerClient.close();
-        }
+    // Method to display all measurements covering the entire screen
+    public void displayAllMeasurements() {
+        Platform.runLater(() -> {
+            Stage stage = new Stage();
+            stage.setTitle("All Active Container Information");
+
+            // Create and configure the JavaFX TextArea
+            TextArea infoTextArea = new TextArea();
+            infoTextArea.setEditable(false);
+            infoTextArea.setWrapText(true);
+
+            // Display a list of active containers with their respective details
+            infoTextArea.appendText("All Active Container Measurements:\n");
+            for (ContainerMeasurement measurement : containerMeasurements) {
+                infoTextArea.appendText("\nContainer ID: " + measurement.getId() + "\n");
+                infoTextArea.appendText("Image Name: " + measurement.getImage() + "\n");
+                infoTextArea.appendText("Status: " + measurement.getStatus() + "\n");
+                infoTextArea.appendText("Command: " + measurement.getCommand() + "\n");
+                infoTextArea.appendText("Ports: " + measurement.getPorts() + "\n");
+                infoTextArea.appendText("------------------------\n");
+            }
+
+            // Create the scene
+            Scene scene = new Scene(infoTextArea);
+
+            // Get the primary screen dimensions
+            Screen primaryScreen = Screen.getPrimary();
+            Rectangle2D screenBounds = primaryScreen.getVisualBounds();
+
+            // Set the size of the stage to cover the entire screen
+            stage.setX(screenBounds.getMinX());
+            stage.setY(screenBounds.getMinY());
+            stage.setWidth(screenBounds.getWidth());
+            stage.setHeight(screenBounds.getHeight());
+
+            // Set the scene to the center of the screen
+            stage.setScene(scene);
+            stage.centerOnScreen();
+
+            // Show the stage
+            stage.show();
+        });
     }
 
     // Method to get the container measurements
@@ -113,6 +174,7 @@ public class MonitorThread implements Runnable, AutoCloseable {
         return activeInstances;
     }
 
+    // Get a list of IDs for active Docker instances
     public List<String> getActiveDockerInstancesList() {
         List<String> activeInstances = new ArrayList<>();
 
@@ -125,6 +187,7 @@ public class MonitorThread implements Runnable, AutoCloseable {
         return activeInstances;
     }
 
+    // Get a list of IDs for inactive Docker instances
     public List<String> getInactiveDockerInstancesList() {
         List<String> inactiveInstances = new ArrayList<>();
 
@@ -141,20 +204,33 @@ public class MonitorThread implements Runnable, AutoCloseable {
     public int getInactiveDockerInstances() {
         List<Container> allContainers = dockerClient.listContainersCmd().exec();
 
+        // Debug print
+        System.out.println("Debug: All Containers: " + allContainers);
+
         // Count inactive containers
         int inactiveInstances = 0;
         for (Container container : allContainers) {
+            // Debug print
+            System.out.println("Debug: Container State: " + container.getState());
+
             if (!container.getState().equals("running")) {
                 inactiveInstances++;
             }
         }
-
         return inactiveInstances;
     }
 
     // Control if a container is running
     private boolean isContainerActive(ContainerMeasurement measurement) {
         return "running".equalsIgnoreCase(measurement.getStatus());
+    }
+
+    // AutoCloseable interface method for proper resource cleanup
+    @Override
+    public void close() throws Exception {
+        if (dockerClient != null) {
+            dockerClient.close();
+        }
     }
 
     // Inner class representing a container measurement
@@ -165,6 +241,16 @@ public class MonitorThread implements Runnable, AutoCloseable {
         private final String ports;
         private final String command;
 
+        /**
+         * Constructor to initialize a container measurement.
+         *
+         * @param id      The ID of the container.
+         * @param image   The image associated with the container.
+         * @param status  The status of the container.
+         * @param ports   The ports of the container.
+         * @param command The command executed by the container.
+         */
+
         public ContainerMeasurement(String id, String image, String status, String ports, String command) {
             this.id = id;
             this.image = image;
@@ -173,6 +259,7 @@ public class MonitorThread implements Runnable, AutoCloseable {
             this.command = command;
         }
 
+        // Getter methods for container attributes
         public String getId() {
             return id;
         }

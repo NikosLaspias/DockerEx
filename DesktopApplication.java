@@ -1,23 +1,44 @@
 package com.example;
 
+import javafx.scene.image.Image;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import java.util.List;
-import org.springframework.http.ResponseEntity;
-import java.io.IOException;
-import java.util.Scanner;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+
+/**
+ * The main class representing the Desktop Application for Docker Cluster
+ * Management.
+ *
+ * This class extends the JavaFX Application class and serves as the entry point
+ * for the application.
+ */
 
 public class DesktopApplication extends Application {
-    private static volatile boolean isRunning = true;
+    private ComboBox<String> optionsComboBox;
+
+    // Fields for the primary stage and menu text area
+    private Stage primaryStage;
+    private TextArea menuTextArea;
 
     public static void main(String[] args) {
         launch(args);
@@ -26,88 +47,132 @@ public class DesktopApplication extends Application {
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Docker Cluster Management");
-        VBox root = new VBox();
-        root.setSpacing(10);
-        root.setAlignment(Pos.CENTER);
+        this.primaryStage = primaryStage;
+        VBox root = new VBox(); // Use VBox for vertical layout
+        root.setAlignment(Pos.TOP_LEFT);
+        root.setSpacing(10); // Spacing between components
+        root.setPadding(new Insets(10));
 
-        TextArea menuTextArea = new TextArea();
-        menuTextArea.setEditable(false);
-        menuTextArea.setWrapText(true);
-        menuTextArea.setText(
-                "DOCKER CLUSTER MANAGEMENT\n" +
-                        "--We provide you the menu to select the state that you prefer--\n" +
-                        "--1.Create a container and check the list with the status with an optional  id--\n" +
+        // Create the title Text with dark blue color
+        Text titleText = new Text("DOCKER CLUSTER MANAGEMENT");
+        titleText.setFont(Font.font("Arial", FontWeight.BOLD, 24)); // Bold 24pt font
+        titleText.setFill(Color.DARKBLUE);
+
+        // Load the background image
+        Image backgroundImage = new Image("https://shadowsocks.be/usr/uploads/docker.png");
+
+        // Set the background color of the root to turquoise
+        root.setBackground(new Background(new BackgroundFill(Color.TURQUOISE, CornerRadii.EMPTY, Insets.EMPTY)));
+
+        // Set the background image to the root
+        root.setBackground(new Background(new BackgroundImage(
+                backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(100, 100, true, true, true, false))));
+
+        // Add the title to the root layout
+        root.getChildren().add(titleText);
+
+        // Add a ComboBox for user selection
+        optionsComboBox = new ComboBox<>();
+        for (int i = 1; i <= 8; i++) {
+            optionsComboBox.getItems().add("Option " + i);
+        }
+
+        // Create the label
+        Label menuLabel = createMenuLabel();
+
+        // Add a button to trigger the selected option
+        Button selectButton = new Button("Select");
+        selectButton.setOnAction(event -> handleOption(optionsComboBox.getValue()));
+
+        // Add UI elements to the root layout
+        root.getChildren().addAll(menuLabel, optionsComboBox, selectButton);
+
+        // Create and set the scene for the primary stage
+        Scene scene = new Scene(root, 800, 600);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private Label createMenuLabel() {
+        Label menuLabel = new Label(
+                "--We provide you the menu to select the state that you prefer--\n" +
+                        "--1.Create a container and check the list with the status with an optional id--\n" +
                         "--2.Start-stop-execute a container based on id--\n" +
-                        "--3.Create a container based on image--\n" +
+                        "--3.Combination of containers and images -\n" +
                         "--4.Conduct actions in Images--\n" +
                         "--5.Monitoring Container-Create a bar chart with the statistics\n" +
                         "--6.Connect with the database of your choice to insert the measurements\n" +
                         "--7.Rest API for the handling of containers-\n" +
                         "--8. Exit--\n" +
                         "Enter your choice: ");
-
-        // Add a ComboBox for user selection
-        ComboBox<String> optionsComboBox = new ComboBox<>();
-        for (int i = 1; i <= 8; i++) {
-            optionsComboBox.getItems().add("Option " + i);
-        }
-
-        Button selectButton = new Button("Select");
-        selectButton.setOnAction(event -> handleOption(optionsComboBox.getValue()));
-
-        root.getChildren().addAll(menuTextArea, optionsComboBox, selectButton);
-
-        Scene scene = new Scene(root, 400, 300);
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        menuLabel.setStyle(
+                "-fx-text-fill: white; " +
+                        "-fx-font-size: 16; " +
+                        "-fx-effect: dropshadow(three-pass-box, darkblue, 10, 0, 0, 0);");
+        return menuLabel;
     }
 
+    // Method to handle the selected option
     private void handleOption(String option) {
+        // Check if the selected option is null
         if (option == null) {
             showAlert("Please select an option.");
             return;
         }
 
+        // Parse the selected option number
         int optionNumber = Integer.parseInt(option.split(" ")[1]);
 
         try {
+            // Call the appropriate handler based on the selected option
             handleOption(optionNumber);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
+    // Method to handle the selected option number
     private void handleOption(int option) throws InterruptedException {
+        // Switch statement to determine the action based on the selected option
         switch (option) {
             case 1:
-                handleOption1();
+                new ContainerManager().handleOption1();
                 break;
             case 2:
-                handleOption2();
+                new ExecutorManager().handleOption2();
                 break;
             case 3:
-                handleOption3();
+                new AppManager().handleOption3();
                 break;
             case 4:
-                handleOption4();
+                new ImageManager(menuTextArea).handleOption4();
                 break;
             case 5:
-                handleOption5();
+                new MonitorManager().handleOption5();
                 break;
             case 6:
-                handleOption6();
+                new DatabaseManager().handleOption6();
                 break;
             case 7:
-                handleOption7();
+                // Create and handle the RestController for Option 7
+                RestControler restOptionHandler = new RestControler(
+                        new RestAPI(new MonitorThread(), new ExecutorThread(), new Database()), primaryStage);
+                restOptionHandler.handleOption7();
                 break;
+
             case 8:
+                // Handle Option 8 (Exit)
                 handleOption8();
                 break;
             default:
+                // Show an alert for an invalid choice
                 showAlert("Invalid choice. Please try again.");
         }
     }
 
+    // Method to display an information alert
     private void showAlert(String content) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Information");
@@ -116,158 +181,17 @@ public class DesktopApplication extends Application {
         alert.showAndWait();
     }
 
-    private void handleOption1() {
-        System.out.println("Handling Option 1: Create a container and check the list with status with an optional id");
-        ContainerCreation.manageContainers();
-    }
-
-    private void handleOption2() {
-        System.out.println("Handling Option 2: Start-stop-execute a container based on id");
-        try {
-            ExecutorThread executorThread = new ExecutorThread();
-            executorThread.executeContainer();
-            try (Scanner scanner = new Scanner(System.in)) {
-                System.out.print("Insert the container id that you want to start: ");
-                String containerId = scanner.nextLine();
-                executorThread.startContainer(containerId);
-                System.out.print("Insert the container id that you want to stop: ");
-                executorThread.stopContainer(containerId);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void handleOption3() throws InterruptedException {
-        System.out.println("Handling Option 3: Create a container based on image");
-        // Create and use the AppWithContainer class
-        try (Scanner scanner = new Scanner(System.in)) {
-            System.out.println("Enter the Docker image name:");
-            String imageName = scanner.nextLine();
-
-            System.out.println("Enter the Docker container ID:");
-            String containerId = scanner.nextLine();
-
-            // Create an instance of AppWithContainer and manage the container
-            AppWithContainer app = new AppWithContainer("tcp://localhost:2375", imageName, containerId);
-            app.manageContainer();
-        }
-    }
-
-    private void handleOption4() {
-        System.out.println("Handling Option 4: Conduct actions in Images");
-        // Docker image operations
-        try (Image dockerOperations = new Image()) {
-            // Perform various Docker image operations
-            String imageName = dockerOperations.getImageName();
-            dockerOperations.searchImages(imageName);
-            System.out.println("Attempting to pull image: " + imageName);
-            dockerOperations.searchImages(imageName);
-            dockerOperations.inspectImage(imageName);
-            dockerOperations.removeImage(imageName);
-            dockerOperations.showPullHistory(imageName);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void handleOption5() {
-        System.out.println("Handling Option 5: Monitoring Container - Create a chart");
-        Thread monitorThread = new Thread(new MonitorThread());
-        monitorThread.start();
-        // Use the executorService for executing the MonitorThread at fixed intervals
-        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
-        executorService.scheduleAtFixedRate(() -> {
-            // Get measurements from the MonitorThread dynamically
-            List<MonitorThread.ContainerMeasurement> measurements = getMeasurements();
-            // Display the measurement chart only if isRunning is true
-            if (isRunning) {
-                SwingUtilities.invokeLater(() -> displayMeasurementChart(measurements));
-                isRunning = false;
-            }
-        }, 0, 5, TimeUnit.SECONDS);
-    }
-
-    // Existing methods...
-
-    // Method to get measurements from the MonitorThread
-    private static List<MonitorThread.ContainerMeasurement> getMeasurements() {
-        MonitorThread monitorThread = new MonitorThread();
-        Thread thread = new Thread(monitorThread);
-        thread.start();
-        try {
-            // Allow some time for the MonitorThread to collect measurements
-            thread.join(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return monitorThread.getContainerMeasurements();
-    }
-
-    // Method to display the measurement chart
-    private static void displayMeasurementChart(List<MonitorThread.ContainerMeasurement> measurements) {
-        // Create the measurement chart with actual measurements
-        MeasurementChart chart = new MeasurementChart("Container Measurements",
-                measurements.toArray(new MonitorThread.ContainerMeasurement[0]));
-        chart.setSize(800, 600);
-        chart.setLocationRelativeTo(null);
-        chart.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        chart.setVisible(true);
-    }
-
-    private void handleOption6() {
-        System.out.println("Handling Option 6: Connect with the database to insert the measurements");
-
-        // Get measurements from the MonitorThread dynamically
-        List<MonitorThread.ContainerMeasurement> measurements = getMeasurements();
-
-        // Insert measurements into the database
-        try (Database database = new Database()) {
-            database.insertContainerMeasurements(measurements);
-            database.disconnect();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void handleOption7() {
-        System.out.println("Handling Option 7: Rest API for the handling of containers");
-
-        RestAPI restAPI = new RestAPI(new MonitorThread(), new ExecutorThread(), new Database());
-
-        // Get measurements
-        ResponseEntity<List<MonitorThread.ContainerMeasurement>> measurementsResponse = restAPI
-                .getMeasurements("start_date_value", "end_date_value");
-        List<MonitorThread.ContainerMeasurement> measurements = measurementsResponse.getBody();
-
-        // Get active and inactive instances
-        ResponseEntity<Integer> activeInstances = restAPI.getActiveDockerInstances();
-        ResponseEntity<Integer> inactiveInstances = restAPI.getInactiveDockerInstances();
-
-        // Start and stop containers
-        ResponseEntity<String> startResult = restAPI.startContainer("containerId");
-        ResponseEntity<String> stopResult = restAPI.stopContainer("containerId");
-
-        // Print results
-        System.out.println("Measurements: " + measurements);
-        System.out.println("Active Instances: " + activeInstances);
-        System.out.println("Inactive Instances: " + inactiveInstances);
-        System.out.println("Start Container Result: " + startResult.getBody());
-        System.out.println("Stop Container Result: " + stopResult.getBody());
-
-        // Scheduled task to get measurements periodically
-        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
-        executorService.scheduleAtFixedRate(() -> {
-            restAPI.getMeasurements("start_date",
-                    "end_date");
-
-        }, 0, 5, TimeUnit.SECONDS);
-    }
-
+    // Method to handle Option 8 (Exit)
     private void handleOption8() {
-        System.out.println("Exiting the program. Goodbye!");
+        // Create an alert to display "Goodbye"
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Goodbye!");
+        alert.setHeaderText(null);
+        alert.setContentText("Exiting the program. Goodbye!");
+        // Show the alert and wait for it to be closed
+        alert.showAndWait();
+        // Close the JavaFX application
+        Platform.exit();
         System.exit(0);
     }
 }

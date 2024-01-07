@@ -2,73 +2,166 @@ package com.example;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Network;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
+import javafx.application.Platform;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextInputDialog;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.command.InspectVolumeResponse;
-import com.github.dockerjava.api.command.ListVolumesResponse;
-
+import com.github.dockerjava.api.model.Frame;
+import com.github.dockerjava.api.async.ResultCallback;
+import javafx.stage.Stage;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Optional;
+import java.util.Comparator;
 
+/**
+ * The ContainerCreation class is responsible for managing Docker containers,
+ * including starting and stopping them.
+ */
 public class ContainerCreation {
+
     private static String containerId;
+    private static DockerClient dockerClient;
+
+    /**
+     * Manages Docker containers by prompting the user for a container ID and
+     * starting or stopping the container based on its current state.
+     * Additionally, displays information about active and inactive containers,
+     * volumes, and networks.
+     */
+
+    public static DockerClient getDockerClient() {
+        return dockerClient;
+    }
 
     public static void manageContainers() {
         // Creation of docker client
         DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
                 .withDockerHost("tcp://localhost:2375").build();
-        DockerClient dockerClient = DockerClientBuilder.getInstance(config).build();
-        Scanner input = new Scanner(System.in);
+        dockerClient = DockerClientBuilder.getInstance(config).build();
+
         boolean state = false;
         do {
             try {
-                // ID of container that you want to control
-                System.out.println("Please enter the container ID that you want to control:");
-                containerId = input.next();
-                state = true;
+                TextInputDialog dialog = new TextInputDialog();
+                dialog.setTitle("Containers");
+                dialog.setHeaderText("Enter the container id that you want to control");
+
+                Optional<String> result = dialog.showAndWait();
+                if (result.isPresent()) {
+                    containerId = result.get();
+                    state = true;
+                }
             } catch (Exception e) {
-                System.err.println("Invalid container ID.Please try again ");
-                input.next();
+                showErrorAlert("Invalid container ID. Please try again.");
             }
         } while (!state);
-        input.close();
 
-        // control if the container is running
+        // Control if the container is running
         InspectContainerResponse containerInfo = dockerClient.inspectContainerCmd(containerId).exec();
-
         Boolean isRunning = containerInfo.getState().getRunning();
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Container Status");
 
         if (!isRunning) {
             // Start the container
             StartContainerCmd startCmd = dockerClient.startContainerCmd(containerId);
             startCmd.exec();
-            System.out.println("Container started.");
+            alert.setHeaderText("Container Started");
+            alert.setContentText("Container has been started.");
+            showContainerLogs(containerId);
         } else {
             // Stop the container
             StopContainerCmd stopCmd = dockerClient.stopContainerCmd(containerId);
             stopCmd.exec();
-            System.out.println("Container stopped.");
+            alert.setHeaderText("Container Stopped");
+            alert.setContentText("Container has been stopped.");
+            showContainerLogs(containerId);
         }
+        alert.showAndWait();
 
-        // Display a list of active containers with their respective id and status
-        System.out.println("Active Containers:");
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
-        containers.forEach(c -> System.out.println(c.getId() + " " + c.getState()));
-        ListVolumesResponse volumesResponse = dockerClient.listVolumesCmd().exec();
-        List<InspectVolumeResponse> volumes = volumesResponse.getVolumes();
+        // Display information about active and inactive containers in a window
+        Platform.runLater(() -> {
+            Stage infoStage = new Stage();
+            infoStage.setTitle("Container Information");
 
-        for (InspectVolumeResponse volume : volumes) {
-            System.out.println("Volume Name: " + volume.getName());
-        }
+            // Create and configure the JavaFX TextArea
+            TextArea infoTextArea = new TextArea();
+            infoTextArea.setEditable(false);
+            infoTextArea.setWrapText(true);
 
-        List<Network> networks = dockerClient.listNetworksCmd().exec();
-        for (Network network : networks) {
-            System.out.println("Network ID: " + network.getId());
-            System.out.println("Network Name: " + network.getName());
-        }
+            List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+            containers.sort(Comparator.comparing(c -> c.getState().equalsIgnoreCase("running") ? 0 : 1));
+
+            long activeCount = containers.stream().filter(c -> c.getState().equalsIgnoreCase("running")).count();
+            long inactiveCount = containers.size() - activeCount;
+
+            infoTextArea.appendText("Active Containers (" + activeCount + "):\n");
+            infoTextArea.appendText("Inactive Containers (" + inactiveCount + "):\n");
+
+            containers.forEach(c -> {
+                infoTextArea.appendText("Container ID: " + c.getId() + "\n");
+                infoTextArea.appendText("State: " + c.getState() + "\n");
+
+                // Display additional details of the container
+                InspectContainerResponse containerDetails = dockerClient.inspectContainerCmd(c.getId()).exec();
+                infoTextArea.appendText("Details:\n");
+                infoTextArea.appendText("State: " + containerDetails.getState().toString() + "\n");
+                infoTextArea.appendText("Image: " + containerDetails.getConfig().getImage() + "\n");
+                // Add more details as needed
+
+                infoTextArea.appendText("\n"); // Add a newline for better readability
+            });
+
+            Scene infoScene = new Scene(infoTextArea, 600, 400); // Adjust the width and height as needed
+            infoStage.setScene(infoScene);
+            infoStage.showAndWait();
+        });
+    }
+
+    // Show the logs of a container in JavaFX TextArea.
+    private static void showContainerLogs(String containerId) {
+        Platform.runLater(() -> {
+            Stage logStage = new Stage();
+            logStage.setTitle("Container Logs");
+
+            TextArea logTextArea = new TextArea();
+            logTextArea.setEditable(false);
+            logTextArea.setWrapText(true);
+
+            logStage.setOnCloseRequest(event -> {
+                logTextArea.clear();
+            });
+
+            dockerClient.logContainerCmd(containerId)
+                    .withStdOut(true)
+                    .withStdErr(true)
+                    .withFollowStream(true)
+                    .exec(new ResultCallback.Adapter<Frame>() {
+                        @Override
+                        public void onNext(Frame item) {
+                            Platform.runLater(() -> {
+                                logTextArea.appendText(item.toString());
+                            });
+                        }
+                    });
+
+            Scene logScene = new Scene(logTextArea, 800, 600);
+            logStage.setScene(logScene);
+            logStage.show();
+        });
+    }
+
+    private static void showErrorAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
