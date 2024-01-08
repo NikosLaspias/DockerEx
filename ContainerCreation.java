@@ -50,7 +50,8 @@ public class ContainerCreation {
             try {
                 TextInputDialog dialog = new TextInputDialog();
                 dialog.setTitle("Containers");
-                dialog.setHeaderText("Enter the container id that you want to control");
+                dialog.setHeaderText(
+                        "Enter the container id that you want to control-Example of valid container id 05007dd4598a0c01f23275e56bf1848cfc4f2b17426f7bebf1a6219ecda91a41");
 
                 Optional<String> result = dialog.showAndWait();
                 if (result.isPresent()) {
