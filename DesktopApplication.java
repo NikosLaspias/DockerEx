@@ -7,12 +7,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundPosition;
 import javafx.scene.layout.BackgroundRepeat;
 import javafx.scene.layout.BackgroundSize;
-import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -59,16 +57,14 @@ public class DesktopApplication extends Application {
         titleText.setFill(Color.DARKBLUE);
 
         // Load the background image
-        Image backgroundImage = new Image("https://shadowsocks.be/usr/uploads/docker.png");
-
-        // Set the background color of the root to turquoise
-        root.setBackground(new Background(new BackgroundFill(Color.TURQUOISE, CornerRadii.EMPTY, Insets.EMPTY)));
+        Image backgroundImage = new Image(
+                "https://blog.redigit.es/wp-content/uploads/2019/08/tecnologias-virtualizacion-contenedores-imagen-contenido-7-blog-redigit.jpg");
 
         // Set the background image to the root
         root.setBackground(new Background(new BackgroundImage(
                 backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.CENTER,
-                new BackgroundSize(100, 100, true, true, true, false))));
+                new BackgroundSize(100, 100, true, true, true, true))));
 
         // Add the title to the root layout
         root.getChildren().add(titleText);
@@ -98,14 +94,14 @@ public class DesktopApplication extends Application {
     private Label createMenuLabel() {
         Label menuLabel = new Label(
                 "--We provide you the menu to select the state that you prefer--\n" +
-                        "--1.Create a container and check the list with the status with an optional id--\n" +
-                        "--2.Start-stop-execute a container based on id--\n" +
-                        "--3.Combination of containers and images -\n" +
-                        "--4.Conduct actions in Images--\n" +
-                        "--5.Monitoring Container-Create a bar chart with the statistics\n" +
-                        "--6.Connect with the database of your choice to insert the measurements\n" +
-                        "--7.Rest API for the handling of containers-\n" +
-                        "--8. Exit--\n" +
+                        "1.Create a container and check the list with the status with an optional id\n" +
+                        "2.Start-Stop-Execute a container based on id\n" +
+                        "3.Combination of containers and images\n" +
+                        "4.Conduct actions in Images\n" +
+                        "5.Monitoring Container-Create a bar chart with the statistics\n" +
+                        "6.Connect with the database of your choice to insert the measurements\n" +
+                        "7.Rest API for the handling of containers\n" +
+                        "8.Exit\n" +
                         "Enter your choice: ");
         menuLabel.setStyle(
                 "-fx-text-fill: white; " +
