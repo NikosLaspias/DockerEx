@@ -17,13 +17,13 @@ public class DatabaseManager {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Connect with the database");
         alert.setHeaderText(null);
-        alert.setContentText("Do you want to connect with the database to insert the measurements?");
+        alert.setContentText(
+                "Do you want to connect with the database to insert the measurements?You shoud create a personal database in mysql to insert measurements");
 
         // Define Yes and No buttons
         ButtonType yesButton = new ButtonType("Yes", ButtonBar.ButtonData.OK_DONE);
         ButtonType noButton = new ButtonType("No", ButtonBar.ButtonData.CANCEL_CLOSE);
 
-        // Set the buttons in the alert
         alert.getButtonTypes().setAll(yesButton, noButton);
 
         // Show the alert and wait for the user's response

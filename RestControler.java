@@ -52,7 +52,7 @@ public class RestControler {
                 ResponseEntity<Map<String, Object>> containerStatsResponse = restAPI.getContainerStats();
                 Map<String, Object> containerStats = containerStatsResponse.getBody();
 
-                // access the information from containerStats
+                // Access the information from containerStats
                 long activeCount = (long) containerStats.get("activeCount");
                 long inactiveCount = (long) containerStats.get("inactiveCount");
 

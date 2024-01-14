@@ -32,7 +32,7 @@ public class ImageManager {
         // Prompt user for image name
         TextInputDialog dialog = new TextInputDialog("ImageName");
         dialog.setTitle("Enter Image Name");
-        dialog.setHeaderText("Please enter the name of the image:");
+        dialog.setHeaderText("Please enter the name of the image: (example:nignx)");
         dialog.setContentText("Image Name:");
 
         Optional<String> result = dialog.showAndWait();

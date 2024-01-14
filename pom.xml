@@ -13,35 +13,31 @@
 <maven.compiler.target>21</maven.compiler.target>
 </properties>
 <dependencies>
-    <dependency>
-        <groupId>org.openjfx</groupId>
-        <artifactId>javafx-controls</artifactId>
-        <version>17</version>
-    </dependency>
-    <dependency>
-        <groupId>org.openjfx</groupId>
-        <artifactId>javafx-fxml</artifactId>
-        <version>17</version>
-    </dependency>
-    <!-- JavaFX -->
-    <dependency>
-        <groupId>org.openjfx</groupId>
-        <artifactId>javafx-controls</artifactId>
-        <version>17</version>
-    </dependency>
-    <dependency>
-        <groupId>org.openjfx</groupId>
-        <artifactId>javafx-fxml</artifactId>
-        <version>17</version>
-    </dependency>
+ <dependency>
+<groupId>com.github.stefanbirkner</groupId>
+<artifactId>system-lambda</artifactId>
+<version>1.0.0</version>
+<scope>test</scope>
 
-    <!-- Docker Java API -->
-    <dependency>
-        <groupId>com.github.docker-java</groupId>
-        <artifactId>docker-java</artifactId>
-        <version>3.2.9</version>
-    </dependency>
+</dependency>
+<dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter-engine</artifactId>
+    <version>5.10.1</version>
+</dependency>
 
+<dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter-api</artifactId>
+    <version>5.10.1</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/org.testfx/testfx-core -->
+<dependency>
+    <groupId>org.testfx</groupId>
+    <artifactId>testfx-core</artifactId>
+    <version>4.0.17</version>
+    <scope>test</scope>
+</dependency>
   <dependency>
     <groupId>org.diirt.javafx</groupId>
     <artifactId>javafx-all</artifactId>
@@ -142,14 +138,14 @@
     <artifactId>logback-core</artifactId>
     <version>1.4.14</version>
 </dependency>
-<!--  https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12  -->
+<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-reload4j -->
 <dependency>
-<groupId>org.slf4j</groupId>
-<artifactId>slf4j-log4j12</artifactId>
-<version>2.0.9</version>
-<type>pom</type>
-<scope>test</scope>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-reload4j</artifactId>
+    <version>2.1.0-alpha1</version>
+    <scope>test</scope>
 </dependency>
+
 <!--  https://mvnrepository.com/artifact/com.github.docker-java/docker-java-api  -->
 <dependency>
 <groupId>com.github.docker-java</groupId>
@@ -189,7 +185,7 @@
         <artifactId>javafx-maven-plugin</artifactId>
         <version>0.0.8</version>
         <configuration>
-            <mainClass>com.example.DesktopApplication</mainClass>
+           <mainClass>com.example.DesktopApplication</mainClass>
         </configuration>
     </plugin>
    
@@ -234,6 +230,58 @@
       </plugin>
 
 
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-shade-plugin</artifactId>
+    <version>3.2.4</version> 
+    <configuration>
+        <transformers>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                 <mainClass>com.example.DesktopApplication</mainClass>
+            </transformer>
+        </transformers>
+        <shadedArtifactAttached>true</shadedArtifactAttached>
+        <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
+        <filters>
+        <filter>
+          <artifact>org.openjfx:javafx-*</artifact>
+             <includes>
+              <include>**/*</include>
+              </includes>
+              </filter>
+            <filter>
+                <artifact>*:*</artifact>
+                <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                </excludes>
+            </filter>
+        </filters>
+    </configuration>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals>
+                <goal>shade</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+
+<plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>com.example.DesktopApplication</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+      </plugin>
 
 <!--  clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle  -->
 <plugin>
