@@ -282,4 +282,78 @@ Alert, ScrollPane, TextArea: Used for interacting with the user and displaying i
 The class AppWithContainer uses the external Docker Java API library for interacting with the Docker daemon. Additionally, it utilizes the JavaFX Platform class for synchronizing with the UI thread when displaying an Alert.
 
 
+14. **Image:**
+
+The `Image` class encapsulates Docker image-related operations. It provides methods for pulling images, displaying image information, showing a list of images, searching for a specific image, inspecting an image, removing an image, and displaying the pull history for an image.
+
+**Data Types:**
+
+- **DockerClient:** Represents the Docker client for interacting with the Docker daemon.
+- **DefaultDockerClientConfig:** Configuration for the Docker client.
+- **InspectImageResponse:** Represents the response from inspecting a Docker image.
+- **TextArea:** JavaFX component for displaying text.
+
+**Constructor:**
+
+The constructor initializes the `Image` object with a Docker client configured to communicate with the Docker daemon running on `localhost:2375`. It also takes a `TextArea` as a parameter, where the results of Docker operations will be displayed.
+
+**Methods:**
+
+- **pullImageIfNotExists(String imageName):** Pulls a Docker image if it does not already exist. Displays a message indicating whether the image was already present or pulled successfully.
+
+- **pullImage(String imageName):** Pulls a Docker image with the specified name. Displays a success message or an error message if the image is not found or an exception occurs during pulling.
+
+- **showImageList():** Retrieves a list of Docker images and their information. Displays the information in a separate JavaFX window using a `Stage` and a `TextArea`.
+
+- **searchImages(String imageName):** Searches for a specific Docker image and displays its information, including name, tags, and commands.
+
+- **inspectImage(String imageId):** Retrieves detailed information about a Docker image based on its ID.
+
+- **removeImage(String imageId):** Removes a Docker image based on its ID. Displays a success message or an error message if an exception occurs during removal.
+
+- **showPullHistory(String imageName):** Displays the pull history for a Docker image. Retrieves and shows information about the image's ID and commands executed during pull.
+
+- **showAlert(String title, String content):** Displays an alert using JavaFX's `Alert` class. The method is designed to be run on the JavaFX application thread.
+
+- **showImageListDialog(String imageInfo):** Displays a dialog with the list of Docker images in a `Stage`. The information is presented in a `TextArea`.
+
+- **showPullHistoryDialog(String pullHistory):** Displays a dialog with the pull history for a Docker image in a `Stage`. The information is presented in a `TextArea`.
+
+- **close():** Overrides the `AutoCloseable` interface's `close` method to ensure proper closure of the Docker client when the `Image` object is used in a try-with-resources block.
+
+**External Libraries:**
+
+- **Docker Java API:** The class uses the Docker Java API library to interact with the Docker daemon and perform Docker-related operations.
+
+- **JavaFX:** The class utilizes JavaFX components, such as `Stage`, `TextArea`, and `Alert`, for creating a graphical user interface (GUI) and displaying information to the user.
+
+
+15.**MeasurementChart:**
+
+The `MeasurementChart` class is responsible for creating and displaying a bar chart based on container measurements. This class utilizes the JFreeChart library for chart creation and extends the `JFrame` class for GUI functionality.
+
+**Data Types:**
+
+- **ContainerMeasurement[]:** An array of `ContainerMeasurement` objects representing the container measurements that will be visualized on the chart.
+
+**Constructor:**
+
+The class has a constructor that takes a title and an array of `ContainerMeasurement` objects. In this constructor, it initializes the `MeasurementChart` with the provided title and sets the container measurements for chart generation.
+
+**Methods:**
+
+- **createDataset():** A private method that creates a `CategoryDataset` from the container measurements. It uses a `DefaultCategoryDataset` to store data. In this implementation, it adds each container's ID to the dataset with a count of 1.
+
+**Chart Creation:**
+
+The class creates a bar chart using the `ChartFactory.createBarChart` method from JFreeChart. It sets the chart title as "Container Measurements," the X-axis label as "Containers," and the Y-axis label as "Count." The dataset created by the `createDataset` method is used to populate the chart.
+
+**Chart Panel:**
+
+The chart is added to a `ChartPanel` and set as the content pane of the `MeasurementChart` JFrame. The `ChartPanel` is then configured with preferred dimensions.
+
+**Usage:**
+
+To use this class, instantiate an object of `MeasurementChart` with the desired title and an array of `ContainerMeasurement` objects. Display the chart by showing the JFrame.
+
 
