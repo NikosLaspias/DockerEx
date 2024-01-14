@@ -357,3 +357,43 @@ The chart is added to a `ChartPanel` and set as the content pane of the `Measure
 To use this class, instantiate an object of `MeasurementChart` with the desired title and an array of `ContainerMeasurement` objects. Display the chart by showing the JFrame.
 
 
+16.**ContainerCreation:**
+
+The `ContainerCreation` class is responsible for managing Docker containers, allowing the user to start or stop a specified container and displaying information about active and inactive containers. It also provides methods to retrieve Docker client information and manage container logs.
+
+**Data Types:**
+
+- **DockerClient:** Represents the Docker client for interacting with the Docker daemon.
+- **TextInputDialog:** A JavaFX dialog that prompts the user for input.
+- **Alert:** JavaFX component for displaying alerts to the user.
+- **InspectContainerResponse:** Represents the response from inspecting a Docker container.
+- **Frame:** Represents a frame of output from a Docker container.
+
+**Methods:**
+
+- **getDockerClient():** Returns the Docker client instance.
+
+- **manageContainers():** Manages Docker containers by prompting the user for a container ID and starting or stopping the container based on its current state. It also displays information about active and inactive containers.
+
+- **showContainerLogs(String containerId):** Displays the logs of a specified Docker container in a JavaFX `TextArea`. The logs are fetched in real-time using the `ResultCallback` interface.
+
+- **showErrorAlert(String message):** Displays an error alert using JavaFX's `Alert` class.
+
+**Constructor:**
+
+The class does not have a constructor, as it primarily provides static methods for managing containers and displaying information.
+
+**Usage:**
+
+1. The `manageContainers` method prompts the user to enter a Docker container ID using a `TextInputDialog`.
+2. It then checks the state of the container and starts or stops it accordingly, displaying a corresponding alert.
+3. After the container operation, it retrieves information about active and inactive containers and displays it in a new JavaFX window using a `TextArea`.
+
+**External Libraries:**
+
+- **Docker Java API:** The class uses the Docker Java API library for interacting with the Docker daemon and performing container-related operations.
+
+- **JavaFX:** The class utilizes JavaFX components, such as `Stage`, `Scene`, `TextArea`, `Alert`, and `TextInputDialog`, for creating a graphical user interface (GUI), displaying alerts, and interacting with the user.
+
+**Note:**
+Ensure that the Docker daemon is running and accessible at "tcp://localhost:2375" for proper functionality.
