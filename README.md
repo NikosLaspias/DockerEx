@@ -1,7 +1,7 @@
 # DockerEx
 # Welcome to our docker program!We create a docker application!
 ## 1. Utility of Maven
-This project utilizes Maven for managing dependencies and plugins. The compilation command is `mvn compile`, and for code checking, use `mvn clean javafx:run`. 
+This project utilizes Maven for managing dependencies and plugins. The compilation command is `mvn compile`, and for code checking, use `mvn checkstyle:check`. 
 
 ## 2. Run Application
 To run the application, execute `mvn clean javafx:run`.
