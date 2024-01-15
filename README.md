@@ -8,6 +8,7 @@ To run the application, execute `mvn clean javafx:run`.
 
 ## 3. Usage of the Application
 The Docker Application is designed to be user-friendly, offering a menu with 8 selections for convenient navigation through Docker functionalities. Users can input container statistics into a database using a monitor thread, allowing for dynamic visualization. Clear prompts and guidance are provided for each selection, ensuring a smooth user experience.
+
 ## Guidance 
 The first(1) selection is for the handling of containeres.User can check the status of container with a specific id and also see the list of all runnig and excited containers.The second 2 choice includes actions like Start,Stop and execute a container.The third(3) option combines actions between containers and images and provides the oppοrtunity to delete a container.The four(4) option includes all the selections for images like search-delete-pull-list.The next selection(5) concerns to get the statistics of containers and create a bar diagram with all the active containers. After of the execution of this choice the user is flexible to insert the measuremenets in a sql database with the selection 6 that shoud have created in his own mysql server. Supplementary he shoud created two tables in mysql like this:
 
@@ -29,7 +30,9 @@ For the ending in selection 7 we provide the chance to get the measurments of th
 
 ## 4. Structure of Our Repository
 We use the DockerEx repository for collaboration and file uploads. The main branch contains classes executed on Windows, and a separate branch is dedicated to files compatible with macOS.
-We create a folder demo which contains other folders for our final files.In folder src inscide we conclude the final files.
+We create a folder demo which contains other folders for our final files. In folder DockerEx/demo/src/main/com
+/example we conclude the final files.
+
 ## 5.UML DIAGRAM
 ![UML DIAGRAM](https://github.com/NikosLaspias/DockerEx/blob/main/uml%20(1).drawio.png)
 
