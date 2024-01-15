@@ -1,18 +1,3 @@
-//ContainerCreation: a class that creates a docker container
-//Copyright(C) 2023/24 Eleutheria Koutsiouri
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 package com.example;
 
 import com.github.dockerjava.api.DockerClient;
@@ -129,12 +114,10 @@ public class ContainerCreation {
                 infoTextArea.appendText("Details:\n");
                 infoTextArea.appendText("State: " + containerDetails.getState().toString() + "\n");
                 infoTextArea.appendText("Image: " + containerDetails.getConfig().getImage() + "\n");
-                // Add more details as needed
-
-                infoTextArea.appendText("\n"); // Add a newline for better readability
+                infoTextArea.appendText("\n");
             });
 
-            Scene infoScene = new Scene(infoTextArea, 600, 400); // Adjust the width and height as needed
+            Scene infoScene = new Scene(infoTextArea, 600, 400);
             infoStage.setScene(infoScene);
             infoStage.showAndWait();
         });

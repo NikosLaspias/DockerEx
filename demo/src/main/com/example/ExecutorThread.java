@@ -1,18 +1,3 @@
-//ExecutorThread: a class that applies the functions of the executor thread
-//Copyright(C) 2023/24 Eleutheria Koutsiouri
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 package com.example;
 
 import com.github.dockerjava.api.DockerClient;
@@ -25,6 +10,8 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+
 import java.io.IOException;
 
 /**
@@ -106,33 +93,71 @@ public class ExecutorThread {
         }
     }
 
-    /**
-     * Executes a Docker container.
-     *
-     * @throws IOException If an I/O error occurs.
-     */
-    public void executeContainer() throws IOException {
+    public void executeContainer(String containerId) throws IOException {
         ExposedPort tcp80 = ExposedPort.tcp(80);
         PortBinding portBinding = PortBinding.parse("0.0.0.0:8080");
         HostConfig hostConfig = new HostConfig().withPortBindings(portBinding);
 
-        // Create and start the container
-        CreateContainerResponse container = createAndStartContainer(tcp80, hostConfig);
+        // Check if the container already exists
+        String existingContainerId = containerId;
 
-        // Stop the container (replace "CONTAINER_ID" with the actual container ID)
-        dockerClient.stopContainerCmd(container.getId()).exec();
+        if (dockerClient.listContainersCmd().withShowAll(true).exec().stream()
+                .anyMatch(container -> container.getId().equals(existingContainerId))) {
+            // Container already exists
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText(null);
+                alert.setContentText("Container already exists: " + existingContainerId);
+                alert.showAndWait();
+            });
+        } else {
+            // Create and start the container
+            CreateContainerResponse container = createAndStartContainer(tcp80, hostConfig);
+
+            // Display a confirmation dialog
+            Platform.runLater(() -> {
+                Alert confirmationDialog = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmationDialog.setTitle("Container Action");
+                confirmationDialog.setHeaderText(null);
+                confirmationDialog.setContentText("Do you want to start or stop the container?");
+                ButtonType buttonTypeStart = new ButtonType("Start");
+                ButtonType buttonTypeStop = new ButtonType("Stop");
+                confirmationDialog.getButtonTypes().setAll(buttonTypeStart, buttonTypeStop);
+
+                java.util.Optional<ButtonType> result = confirmationDialog.showAndWait();
+                if (result.isPresent()) {
+                    if (result.get() == buttonTypeStart) {
+                        // User chose to start the container
+                        showAlert("Container started. Container ID: " + container.getId());
+                    } else if (result.get() == buttonTypeStop) {
+                        // User chose to stop the container
+                        dockerClient.stopContainerCmd(container.getId()).exec();
+                        showAlert("Container stopped. Container ID: " + container.getId());
+                    }
+                }
+            });
+        }
+    }
+
+    private void showAlert(String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Information");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
     }
 
     private CreateContainerResponse createAndStartContainer(ExposedPort exposedPort, HostConfig hostConfig) {
         // Create the container
-        CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd("nginx")
+        CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd("mongo")
                 .withExposedPorts(exposedPort)
                 .withHostConfig(hostConfig);
         CreateContainerResponse container = createContainerCmd.exec();
-
         // Start the container
         dockerClient.startContainerCmd(container.getId()).exec();
-
         return container;
     }
 }

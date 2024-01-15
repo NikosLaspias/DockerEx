@@ -1,18 +1,3 @@
-//AppWithContainer:a class who manages the docker containers
-//Copyright(C) 2023/24 Eleutheria Koutsiouri
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 package com.example;
 
 import com.github.dockerjava.api.DockerClient;
@@ -42,14 +27,12 @@ public class AppWithContainer {
     private final String imageName;
     private final String containerName;
 
-    // Constructor
     public AppWithContainer(DockerClient dockerClient, String imageName, String containerName) {
         this.dockerClient = dockerClient;
         this.imageName = imageName;
         this.containerName = containerName;
     }
 
-    // Methods to get the name of the image and the id of container
     public String getImageName() {
         return this.imageName;
     }
@@ -97,6 +80,8 @@ public class AppWithContainer {
                     public void onNext(Frame frame) {
                         if (frame != null) {
                             try {
+                                // Depending on the stream type (STDOUT, RAW, STDERR), different actions are
+                                // taken
                                 switch (frame.getStreamType()) {
                                     case STDOUT:
                                     case RAW:
@@ -124,6 +109,7 @@ public class AppWithContainer {
                 getContainerInfo(dockerClient.listContainersCmd().withShowAll(true).exec()));
 
         Thread.sleep(8000);
+
         // Delete the Container after a question
         Platform.runLater(() -> {
             TextInputDialog dialog = new TextInputDialog();
@@ -148,8 +134,6 @@ public class AppWithContainer {
 
         // Add information for each container to the StringBuilder
         containers.forEach(c -> info.append(c.getId()).append(" ").append(c.getState()).append("\n"));
-
-        // Return the String containing information about containers
         return info.toString();
     }
 
@@ -167,8 +151,6 @@ public class AppWithContainer {
             // Wrap the TextArea in a ScrollPane
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setContent(textArea);
-
-            // Set the content of the Alert to the ScrollPane
             alert.getDialogPane().setContent(scrollPane);
 
             // Center the window on the screen
