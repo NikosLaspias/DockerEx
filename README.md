@@ -31,7 +31,7 @@ For the ending in selection 7 we provide the chance to get the measurments of th
 We use the DockerEx repository for collaboration and file uploads. The main branch contains classes executed on Windows, and a separate branch is dedicated to files compatible with macOS.
 We create a folder demo which contains other folders for our final files.In folder src inscide we conclude the final files.
 ## 5.UML DIAGRAM
-![UML DIAGRAM](/https://github.com/NikosLaspias/DockerEx/blob/main/uml.png)
+![UML DIAGRAM](https://github.com/NikosLaspias/DockerEx/blob/main/uml%20(1).drawio.png)
 
 ## 6. DATA STRUCTURE
 
