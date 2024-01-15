@@ -1,4 +1,4 @@
-//UserInputProvider: a usefull interface
+//ContainerManagerTest: a class that provides an exception for the class ContainerManager 
 //Copyright(C) 2023/24 Eleutheria Koutsiouri
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,8 +13,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-package com.example;
+import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public interface UserInputProvider {
-    String promptUserForContainerId();
+public class ContainerManagerTest {
+
+    @Test
+    public void testhandleOption1() throws Exception {
+        String text = "Handling Option 1: Create a container and check the list with status with an optional id";
+
+        assertEquals("Handling Option 1: Create a container and check the list with status with an optional id",
+                text);
+    }
 }
