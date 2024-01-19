@@ -140,9 +140,6 @@ public class Database implements AutoCloseable {
             preparedStatement.setString(3, measurement.getStatus());
             preparedStatement.setString(4, measurement.getPorts());
             preparedStatement.setString(5, measurement.getCommand());
-
-            System.out.println("Successfully connected to the database.");
-
             // Execute the update to insert data into the database
             preparedStatement.executeUpdate();
         }
