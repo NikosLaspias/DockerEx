@@ -13,6 +13,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * The ExecutorThread class is responsible for starting, stopping, and executing
@@ -34,22 +35,47 @@ public class ExecutorThread {
     }
 
     /**
+     * Checks if a Docker container is active.
+     *
+     * @param containerId The ID of the container to check.
+     * @return True if the container is active, false otherwise.
+     */
+    private boolean isContainerActive(String containerId) {
+        List<com.github.dockerjava.api.model.Container> containers = dockerClient.listContainersCmd().withShowAll(true)
+                .exec();
+        return containers.stream()
+                .anyMatch(container -> container.getId().equals(containerId) && container.getState().equals("running"));
+    }
+
+    /**
      * Starts a Docker container based on the provided container ID.
      *
      * @param containerId The ID of the container to start.
      */
+
     public void startContainer(String containerId) {
         try {
-            // Start the container based on the containerId
-            dockerClient.startContainerCmd(containerId).exec();
-            // If everything goes well, show an alert message
-            Platform.runLater(() -> {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Container Started");
-                alert.setHeaderText(null);
-                alert.setContentText("Container started: " + containerId);
-                alert.showAndWait();
-            });
+            // Check if the container is already active
+            if (isContainerActive(containerId)) {
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Container Already Active");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Container is already active: " + containerId);
+                    alert.showAndWait();
+                });
+            } else {
+                // Start the container based on the containerId
+                dockerClient.startContainerCmd(containerId).exec();
+                // If everything goes well, show an alert message
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Container Started");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Container started: " + containerId);
+                    alert.showAndWait();
+                });
+            }
         } catch (Exception e) {
             // If an error occurs, show an alert message
             Platform.runLater(() -> {
@@ -64,15 +90,41 @@ public class ExecutorThread {
     }
 
     /**
+     * Checks if a Docker container is stopped.
+     *
+     * @param containerId The ID of the container to check.
+     * @return True if the container is stopped, false otherwise.
+     */
+    private boolean isContainerStopped(String containerId) {
+        List<com.github.dockerjava.api.model.Container> containers = dockerClient.listContainersCmd().withShowAll(true)
+                .exec();
+        return containers.stream()
+                .anyMatch(container -> container.getId().equals(containerId) && container.getState().equals("exited"));
+    }
+
+    /**
      * Stops a Docker container based on the provided container ID.
      *
      * @param containerId The ID of the container to stop.
      */
     public void stopContainer(String containerId) {
         try {
+            // Check if the container is already stopped
+            if (isContainerStopped(containerId)) {
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Container Already Stopped");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Container is already stopped: " + containerId);
+                    alert.showAndWait();
+                });
+                return; // Εάν το container είναι ήδη σταματημένο, τότε δεν χρειάζεται να συνεχίσετε
+            }
+
             // Stop the container based on the containerId
             dockerClient.stopContainerCmd(containerId).exec();
-            // If everything goes well, show an alert message
+
+            // Show an alert message
             Platform.runLater(() -> {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Container Stopped");
