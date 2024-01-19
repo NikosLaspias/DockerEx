@@ -118,7 +118,7 @@ public class ExecutorThread {
                     alert.setContentText("Container is already stopped: " + containerId);
                     alert.showAndWait();
                 });
-                return; // Εάν το container είναι ήδη σταματημένο, τότε δεν χρειάζεται να συνεχίσετε
+                return; 
             }
 
             // Stop the container based on the containerId
