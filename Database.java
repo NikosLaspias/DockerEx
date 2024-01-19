@@ -90,6 +90,7 @@ public class Database implements AutoCloseable {
             showAlert("Connected to the database!");
         } catch (SQLException e) {
             e.printStackTrace();
+            showAlert("Error connecting to the database. Please check your database credentials.");
         }
     }
 
