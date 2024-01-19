@@ -46,8 +46,16 @@ public class RestControler {
                 resultsTextArea.setEditable(false);
                 resultsTextArea.setWrapText(true);
 
-                // Show Docker instances in TextArea
-                resultsTextArea.appendText("Measurements: " + measurements + "\n");
+                // Display measurements
+                resultsTextArea.appendText("Measurements:\n");
+                if (!measurements.isEmpty()) {
+                    for (Map<String, Object> measurement : measurements) {
+                        resultsTextArea.appendText(measurement.toString() + "\n");
+                    }
+                } else {
+                    resultsTextArea.appendText("No measurements found.\n");
+                }
+                resultsTextArea.appendText(System.lineSeparator());
 
                 ResponseEntity<Map<String, Object>> containerStatsResponse = restAPI.getContainerStats();
                 Map<String, Object> containerStats = containerStatsResponse.getBody();
@@ -62,20 +70,24 @@ public class RestControler {
                 @SuppressWarnings("unchecked")
                 List<String> inactiveContainerIds = (List<String>) containerStats.get("inactiveContainerIds");
 
-                // Use the retrieved information as needed
-                // For example, display in a TextArea
+                // Display active containers
                 resultsTextArea.appendText("Active Containers: " + activeCount + "\n");
                 resultsTextArea.appendText("Inactive Containers: " + inactiveCount + "\n");
+                resultsTextArea.appendText(System.lineSeparator());
 
+                // Display active containers
+                resultsTextArea.appendText("Active Container IDs:\n");
                 if (!activeContainerIds.isEmpty()) {
-                    resultsTextArea.appendText("Active Container IDs: " + String.join(", ", activeContainerIds) + "\n");
+                    resultsTextArea.appendText(String.join("\n\n", activeContainerIds) + "\n\n");
                 } else {
                     resultsTextArea.appendText("No active containers found.\n");
                 }
+                resultsTextArea.appendText(System.lineSeparator());
 
+                // Display inactive containers
+                resultsTextArea.appendText("Inactive Container IDs:\n");
                 if (!inactiveContainerIds.isEmpty()) {
-                    resultsTextArea
-                            .appendText("Inactive Container IDs: " + String.join(", ", inactiveContainerIds) + "\n");
+                    resultsTextArea.appendText(String.join("\n\n", inactiveContainerIds) + "\n\n");
                 } else {
                     resultsTextArea.appendText("No inactive containers found.\n");
                 }
