@@ -105,7 +105,7 @@ public class AppWithContainer {
                 })
                 .awaitCompletion();
 
-        showAlert("List with the contaners Containers",
+        showAlert("List with the Containers",
                 getContainerInfo(dockerClient.listContainersCmd().withShowAll(true).exec()));
 
         Thread.sleep(8000);
