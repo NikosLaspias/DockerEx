@@ -7,7 +7,7 @@ import javafx.scene.control.TextInputDialog;
 
 public class AppManager {
     public void handleOption3() {
-        System.out.println("Handling Option 3: Create a container based on image");
+        System.out.println("Handling Option 3: Combination of images and containers");
 
         // Create a dialog for user input
         TextInputDialog dialog = new TextInputDialog();
