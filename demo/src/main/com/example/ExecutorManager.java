@@ -26,8 +26,7 @@ public class ExecutorManager {
                     case "Execute":
                         try {
                             // Execute the container
-                            // Ask the user for the container id to stop
-                            containerId = askForContainerId("Enter the container id that you want to stop:");
+                            containerId = askForContainerId("Enter the container id that you want to execute:");
                             // Stop the specified container
                             executorThread.executeContainer(containerId);
                         } catch (IOException e) {
